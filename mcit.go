@@ -6,7 +6,9 @@ import (
 	"slices"
 )
 
-func Search(searchFn func(actions []string) (expand []string, priors []float64, exhaust bool, results RunResults, done bool)) SearchResults {
+type Func func(actions []string) (expand []string, priors []float64, exhaust bool, results RunResults, done bool)
+
+func Search(runFn Func) SearchResults {
 	// 0. Initialize state.
 	//	0a. Initialize the search tree.
 	root := &node{
@@ -42,7 +44,7 @@ func Search(searchFn func(actions []string) (expand []string, priors []float64, 
 		replay = curr.getLine(replay)
 
 		// 2. Run simulations at the frontier node.
-		expand, priors, exhaust, results, done := searchFn(replay)
+		expand, priors, exhaust, results, done := runFn(replay)
 		if done { //	2a. (optional) Set stop flag to stop search.
 			break
 		}
@@ -113,7 +115,7 @@ func Search(searchFn func(actions []string) (expand []string, priors []float64, 
 	priorityHist := makeHist(priorityBins)
 	fillHist(priorityHist, root, func(n *node) float64 { return n.ucb1 })
 
-	bestChild := getBestChild(root)
+	bestChild := getMaxChild(root)
 
 	mostRunChild := getMostRunChild(root)
 
@@ -177,16 +179,27 @@ func getBestNode(bestNode *node, root *node) {
 	}
 }
 
-func getBestLine(root *node) *node { return getSelectLine(root, getBestChild) }
+func getBestLine(root *node) *node { return getSelectLine(root, getMaxChild) }
 
-func getBestChild(root *node) *node {
-	var bestChild *node
+func getMaxChild(root *node) *node {
+	var maxChild *node
 	for _, child := range root.children {
-		if bestChild.score() < child.score() {
-			bestChild = child
+		if maxChild.score() < child.score() {
+			maxChild = child
 		}
 	}
-	return bestChild
+	return maxChild
+}
+
+func getMinChild(root *node) *node {
+	var minChild *node
+	for _, child := range root.children {
+		minScore := minChild.score()
+		if childScore := child.score(); childScore != math.Inf(-1) && minScore == math.Inf(-1) || childScore < minChild.score() {
+			minChild = child
+		}
+	}
+	return minChild
 }
 
 func getMostRunLine(root *node) *node { return getSelectLine(root, getMostRunChild) }
