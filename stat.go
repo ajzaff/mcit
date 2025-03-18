@@ -18,37 +18,13 @@ type NodeStat struct {
 	frontierIdx int
 }
 
-func newShallowNodeStat(n *node) *NodeStat {
-	s := new(NodeStat)
-	s.reset(n)
-	return s
-}
-
-func newVariationStat(n *node) *NodeStat {
-	s := new(NodeStat)
-	s.reset(n)
-	if n.parent != nil {
-		s.Parent = newVariationStat(n.parent)
-	}
-	return s
-}
-
-func newFullNodeStat(n *node) *NodeStat {
-	s := new(NodeStat)
-	s.reset(n)
-	for _, child := range n.children {
-		s.newSubtree(child)
-	}
-	return s
-}
-
 func newRootStat() *NodeStat { return &NodeStat{frontierIdx: -1, Prior: 1} }
 
-func (parent *NodeStat) NewChild(action string) *NodeStat {
+func (parent *NodeStat) NewChild(action string) (child *NodeStat, created bool) {
 	if child, found := parent.Children[action]; found {
-		return child
+		return child, false
 	}
-	n := &NodeStat{
+	child = &NodeStat{
 		Parent:      parent,
 		Height:      parent.Height + 1,
 		frontierIdx: -1,
@@ -58,33 +34,19 @@ func (parent *NodeStat) NewChild(action string) *NodeStat {
 	if parent.Children == nil {
 		parent.Children = map[string]*NodeStat{}
 	}
-	parent.Children[action] = n
-	return n
+	parent.Children[action] = child
+	return child, true
 }
 
-func (parent *NodeStat) newSubtree(n *node) *NodeStat {
-	s := new(NodeStat)
-	s.Parent = parent
-	s.reset(n)
-	s.Height = parent.Height + 1
-	for _, child := range n.children {
-		s.newSubtree(child)
-	}
-	if parent.Children == nil {
-		parent.Children = make(map[string]*NodeStat)
-	}
-	parent.Children[n.action] = s
-	return s
-}
-
-func (s *NodeStat) reset(n *node) {
-	s.Action = n.action
-	s.Height = n.height
-	s.Priority = n.ucb1
-	s.Prior = n.prior
-	s.Runs = n.runs
-	s.Value = n.value
-	s.frontierIdx = n.frontierIdx
+// Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
+// without modifying the original stat object.
+func (s *NodeStat) Detatched() *NodeStat {
+	var copy NodeStat
+	copy = *s
+	copy.Parent = nil
+	copy.Children = nil
+	copy.frontierIdx = -1
+	return &copy
 }
 
 func (n *NodeStat) Exhausted() bool { return n.frontierIdx == -1 }

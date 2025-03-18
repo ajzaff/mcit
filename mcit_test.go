@@ -92,7 +92,7 @@ func TestSearchFloatRange(t *testing.T) {
 
 		return
 	}, MaxVariation(res), DetailedSearchStats(searchStats), Histogram(countHist, func(ns *NodeStat) float64 { return ns.Runs }),
-		Exhaustable(true), DoneAfter(3*time.Second))
+		Exhaustable(true), DoneAfter(500*time.Millisecond))
 
 	t.Logf("%#v\n", countHist)
 	t.Logf("%#v\n", searchStats)

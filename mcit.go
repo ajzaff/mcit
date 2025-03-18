@@ -17,7 +17,7 @@ type RunResults struct {
 type Func func(actions []string) RunResults
 
 type Continuation struct {
-	root *node
+	root *NodeStat
 }
 
 func Search(runFn Func, opts ...Option) {
@@ -33,12 +33,12 @@ func Search(runFn Func, opts ...Option) {
 	//	0ba. Initialize root.
 	root := searchOpts.root
 	if root == nil {
-		searchOpts.root = newRoot()
+		searchOpts.root = newRootStat()
 		root = searchOpts.root
 	}
 
 	//	0bb. Initialize a frontier heap.
-	frontier := []*node{}
+	frontier := []*NodeStat{}
 	heap.Push((*byUCB1)(&frontier), root)
 
 	//	0c. Schedule post-run hooks.
@@ -59,7 +59,7 @@ func Search(runFn Func, opts ...Option) {
 		// 1. Select a frontier node from the frontier heap and construct replay actions.
 		curr := frontier[0]
 
-		replay = curr.appendLine(replay[:0])
+		replay = curr.AppendLine(replay[:0])
 
 		// 2. Run simulations at the frontier node.
 		results := runFn(replay)
@@ -72,15 +72,14 @@ func Search(runFn Func, opts ...Option) {
 
 		// 	2b. (optional) Expand the node, and add children to the state.
 		for i, e := range results.Expand {
-			if _, found := curr.children[e]; found {
+			child, created := curr.NewChild(e)
+			if !created {
 				continue
 			}
 
-			child := curr.newChild(e)
-
 			//	2aa. (optional) Priors, if provided, should match the slice of expanded nodes.
 			if len(results.Priors) > 0 {
-				child.prior = results.Priors[i]
+				child.Prior = results.Priors[i]
 			}
 
 			//	2ab. Push the child onto the frontier heap.
@@ -95,10 +94,10 @@ func Search(runFn Func, opts ...Option) {
 		}
 
 		// 	2c. Backpropagate the results up the tree and fix the frontier nodes.
-		for head := curr; head != nil; head = head.parent {
-			head.runs += results.Count
-			head.value += results.Value
-			head.recomputeUCB1()
+		for head := curr; head != nil; head = head.Parent {
+			head.Runs += results.Count
+			head.Value += results.Value
+			head.RecomputePriority()
 			if head.frontierIdx != -1 {
 				heap.Fix((*byUCB1)(&frontier), head.frontierIdx)
 			}
