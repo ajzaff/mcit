@@ -15,6 +15,10 @@ var (
 	}
 )
 
+func DefaultRunBins() []float64      { return slices.Clone(runBins) }
+func DefaultScoreBins() []float64    { return slices.Clone(scoreBins) }
+func DefaultPriorityBins() []float64 { return slices.Clone(priorityBins) }
+
 type HistBin struct {
 	Max   float64
 	Count int64
@@ -24,12 +28,12 @@ type Hist struct {
 	Bins []HistBin
 }
 
-func makeHist(maxBinValues []float64) Hist {
-	bins := make([]HistBin, len(maxBinValues))
-	for i, v := range maxBinValues {
-		bins[i].Max = v
+func MakeHist(bins []float64) Hist {
+	b := make([]HistBin, len(bins))
+	for i, v := range bins {
+		b[i].Max = v
 	}
-	return Hist{bins}
+	return Hist{Bins: b}
 }
 
 func (h Hist) Insert(x float64) {

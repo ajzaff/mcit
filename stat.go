@@ -9,13 +9,14 @@ type NodeStat struct {
 	Parent   *NodeStat
 	Children map[string]*NodeStat
 
-	Action   string
-	Height   int
-	Priority float64
-	Prior    float64
-	Runs     float64
-	Value    float64
-	Score    float64
+	Action    string
+	Height    int
+	Priority  float64
+	Prior     float64
+	Runs      float64
+	Value     float64
+	Score     float64
+	Exhausted bool
 }
 
 func newShallowNodeStat(n *node) *NodeStat {
@@ -33,7 +34,7 @@ func newVariationStat(n *node) *NodeStat {
 	return s
 }
 
-func newNodeStat(n *node) *NodeStat {
+func newFullNodeStat(n *node) *NodeStat {
 	s := new(NodeStat)
 	s.reset(n)
 	for _, child := range n.children {
@@ -61,9 +62,10 @@ func (s *NodeStat) reset(n *node) {
 	s.Height = n.height
 	s.Priority = n.ucb1
 	s.Prior = n.prior
-	s.Runs = n.results.Count
-	s.Value = n.results.Value
+	s.Runs = n.runs
+	s.Value = n.value
 	s.Score = n.score()
+	s.Exhausted = n.frontierIdx == -1
 }
 
 func (s *NodeStat) Reset() {
@@ -104,4 +106,12 @@ type SearchStats struct {
 	LeafCount          int64
 	MaxFrontierSize    int64
 	ExhaustedNodes     int64
+	MaxDepthRun        int64
+	MaxDepth           int64
+}
+
+func newSearchStats() *SearchStats {
+	return &SearchStats{
+		MinSampledPriority: math.Inf(-1),
+	}
 }
