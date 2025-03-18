@@ -53,15 +53,16 @@ func (n *node) score() float64 {
 	return n.value / n.runs
 }
 
-func (n *node) getLine(line []string) []string {
+func (n *node) appendLine(buf []string) []string {
 	if n == nil {
-		return line[:0]
+		return buf
 	}
-	line = slices.Grow(line[:0], n.height)[:n.height]
-	for i := len(line) - 1; n.parent != nil; i, n = i-1, n.parent {
-		line[i] = n.action
+	i := len(buf)
+	buf = slices.Grow(buf[i:], 1+n.height)[:i+1+n.height]
+	for i := len(buf) - 1; n.parent != nil; i, n = i-1, n.parent {
+		buf[i] = n.action
 	}
-	return line
+	return buf
 }
 
 type byUCB1 []*node

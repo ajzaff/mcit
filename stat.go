@@ -9,14 +9,13 @@ type NodeStat struct {
 	Parent   *NodeStat
 	Children map[string]*NodeStat
 
-	Action    string
-	Height    int
-	Priority  float64
-	Prior     float64
-	Runs      float64
-	Value     float64
-	Score     float64
-	Exhausted bool
+	Action      string
+	Height      int
+	Priority    float64
+	Prior       float64
+	Runs        float64
+	Value       float64
+	frontierIdx int
 }
 
 func newShallowNodeStat(n *node) *NodeStat {
@@ -38,17 +37,38 @@ func newFullNodeStat(n *node) *NodeStat {
 	s := new(NodeStat)
 	s.reset(n)
 	for _, child := range n.children {
-		s.newChild(child)
+		s.newSubtree(child)
 	}
 	return s
 }
 
-func (parent *NodeStat) newChild(n *node) *NodeStat {
+func newRootStat() *NodeStat { return &NodeStat{frontierIdx: -1, Prior: 1} }
+
+func (parent *NodeStat) NewChild(action string) *NodeStat {
+	if child, found := parent.Children[action]; found {
+		return child
+	}
+	n := &NodeStat{
+		Parent:      parent,
+		Height:      parent.Height + 1,
+		frontierIdx: -1,
+		Prior:       1,
+		Action:      action,
+	}
+	if parent.Children == nil {
+		parent.Children = map[string]*NodeStat{}
+	}
+	parent.Children[action] = n
+	return n
+}
+
+func (parent *NodeStat) newSubtree(n *node) *NodeStat {
 	s := new(NodeStat)
 	s.Parent = parent
 	s.reset(n)
+	s.Height = parent.Height + 1
 	for _, child := range n.children {
-		s.newChild(child)
+		s.newSubtree(child)
 	}
 	if parent.Children == nil {
 		parent.Children = make(map[string]*NodeStat)
@@ -64,8 +84,25 @@ func (s *NodeStat) reset(n *node) {
 	s.Prior = n.prior
 	s.Runs = n.runs
 	s.Value = n.value
-	s.Score = n.score()
-	s.Exhausted = n.frontierIdx == -1
+	s.frontierIdx = n.frontierIdx
+}
+
+func (n *NodeStat) Exhausted() bool { return n.frontierIdx == -1 }
+
+func (n *NodeStat) Score() float64 {
+	if n.Runs == 0 {
+		return math.Inf(-1)
+	}
+	return n.Value / n.Runs
+}
+
+func (n *NodeStat) RecomputePriority() { n.Priority = n.ComputePriority() }
+
+func (n *NodeStat) ComputePriority() float64 {
+	if n.Runs == 0 {
+		return math.Inf(+1)
+	}
+	return (n.Value + n.Prior*exploreTerm) / n.Runs
 }
 
 func (s *NodeStat) Reset() {
@@ -74,16 +111,13 @@ func (s *NodeStat) Reset() {
 	s.Height = -1
 	s.Priority = math.Inf(-1)
 	s.Runs = 0
-	s.Score = math.Inf(-1)
 }
 
-func (s *NodeStat) Line() []string {
-	buf := make([]string, 0, 1+s.Height)
-	return s.AppendLine(buf)
-}
+func (s *NodeStat) Line() []string { return s.AppendLine(nil) }
 
 func (s *NodeStat) AppendLine(buf []string) []string {
 	i := len(buf)
+	buf = slices.Grow(buf[i:], 1+s.Height)
 	for ; s.Parent != nil; s = s.Parent {
 		buf = append(buf, s.Action)
 	}

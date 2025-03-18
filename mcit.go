@@ -59,7 +59,7 @@ func Search(runFn Func, opts ...Option) {
 		// 1. Select a frontier node from the frontier heap and construct replay actions.
 		curr := frontier[0]
 
-		replay = curr.getLine(replay)
+		replay = curr.appendLine(replay[:0])
 
 		// 2. Run simulations at the frontier node.
 		results := runFn(replay)
