@@ -16,6 +16,7 @@ type NodeStat struct {
 	Runs        float64
 	Value       float64
 	frontierIdx int
+	Minimize    bool
 }
 
 func newRootStat() *NodeStat { return &NodeStat{frontierIdx: -1, Prior: 1} }
@@ -58,13 +59,26 @@ func (n *NodeStat) Score() float64 {
 	return n.Value / n.Runs
 }
 
+// ConvexScore maps all finite scores v to v*v.
+func (n *NodeStat) ConvexScore() float64 {
+	v := n.Score()
+	if math.IsInf(v, 0) {
+		return v
+	}
+	return v * v
+}
+
 func (n *NodeStat) RecomputePriority() { n.Priority = n.ComputePriority() }
 
 func (n *NodeStat) ComputePriority() float64 {
 	if n.Runs == 0 {
 		return math.Inf(+1)
 	}
-	return (n.Value + n.Prior*exploreTerm) / n.Runs
+	value := n.Value
+	if n.Minimize { // Negate minimizing nodes (min(a,b) = -max(-a,-b)).
+		value = -value
+	}
+	return (value + n.Prior*exploreTerm) / n.Runs
 }
 
 func (s *NodeStat) Reset() {

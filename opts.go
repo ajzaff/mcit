@@ -8,8 +8,8 @@ import (
 type searchOptions struct {
 	src           rand.Source
 	maxIters      int64
-	expandShuffle bool
 	continuation  *Continuation
+	expandShuffle bool
 	exhaustable   bool
 	root          *NodeStat
 	done          <-chan struct{}
@@ -20,6 +20,7 @@ func newSearchOptions() *searchOptions {
 	return &searchOptions{
 		src:           rand.NewPCG(1337, 0xBEEF),
 		expandShuffle: true,
+		exhaustable:   true,
 		searchStats:   newSearchStats(),
 	}
 }
@@ -74,7 +75,7 @@ func BestVariation(stat *NodeStat) Option {
 		if stat == nil {
 			return
 		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(maxNode))
+		*stat = *getSelectLine(opts.root, selectChildFunc(maxNodeStrictlyPositive))
 	}}
 }
 
@@ -83,7 +84,7 @@ func WorstVariation(stat *NodeStat) Option {
 		if stat == nil {
 			return
 		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(minNode))
+		*stat = *getSelectLine(opts.root, selectChildFunc(minNodeStrictlyPositive))
 	}}
 }
 func MostPopularVariation(stat *NodeStat) Option {

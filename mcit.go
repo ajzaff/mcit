@@ -6,15 +6,16 @@ import (
 )
 
 type RunResults struct {
-	Expand  []string
-	Priors  []float64
-	Replace bool
-	Count   float64
-	Value   float64
-	Done    bool
+	Expand   []string
+	Priors   []float64
+	Replace  bool
+	Minimize bool
+	Count    float64
+	Value    float64
+	Done     bool
 }
 
-type Func func(actions []string) RunResults
+type Func func(actions []string) (results RunResults)
 
 type Continuation struct {
 	root *NodeStat
@@ -64,36 +65,39 @@ func Search(runFn Func, opts ...Option) {
 		// 2. Run simulations at the frontier node.
 		results := runFn(replay)
 
-		// 	2a. (optional) Shuffle expanded nodes before inserting them.
+		//	2a. Copy minimize setting to current node.
+		curr.Minimize = results.Minimize
+
+		// 	2b. (optional) Shuffle expanded nodes before inserting them.
 		if searchOpts.expandShuffle {
 			s := results.Expand
 			rand.Shuffle(len(s), func(i, j int) { s[i], s[j] = s[j], s[i] })
 		}
 
-		// 	2b. (optional) Expand the node, and add children to the state.
+		// 	2c. (optional) Expand the node, and add children to the state.
 		for i, e := range results.Expand {
 			child, created := curr.NewChild(e)
 			if !created {
 				continue
 			}
 
-			//	2aa. (optional) Priors, if provided, should match the slice of expanded nodes.
+			//	2ca. (optional) Priors, if provided, should match the slice of expanded nodes.
 			if len(results.Priors) > 0 {
 				child.Prior = results.Priors[i]
 			}
 
-			//	2ab. Push the child onto the frontier heap.
+			//	2cb. Push the child onto the frontier heap.
 			heap.Push((*byUCB1)(&frontier), child)
 		}
 
-		// 	2b. (optional) Exhaust the frontier node (or keep it around for next time).
+		// 	2d. (optional) Exhaust the frontier node (or keep it around for next time).
 		//                 The exhaust logic by default requires that some other conditions hold
 		//                 To avoid the simulation running out of frontier values.
 		if !results.Replace && (searchOpts.exhaustable || len(results.Expand) > 0) {
 			heap.Remove((*byUCB1)(&frontier), curr.frontierIdx)
 		}
 
-		// 	2c. Backpropagate the results up the tree and fix the frontier nodes.
+		// 	2e. Backpropagate the results up the tree and fix the frontier nodes.
 		for head := curr; head != nil; head = head.Parent {
 			head.Runs += results.Count
 			head.Value += results.Value

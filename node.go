@@ -55,6 +55,20 @@ func minNode(a, b *NodeStat) *NodeStat {
 	return a
 }
 
+func maxNodeStrictlyPositive(a, b *NodeStat) *NodeStat {
+	if a == nil || a.ConvexScore() < b.ConvexScore() {
+		return b
+	}
+	return a
+}
+
+func minNodeStrictlyPositive(a, b *NodeStat) *NodeStat {
+	if a == nil || b.ConvexScore() < a.ConvexScore() {
+		return b
+	}
+	return a
+}
+
 func mostPopularNode(a, b *NodeStat) *NodeStat {
 	if a == nil || a.Runs < b.Runs {
 		return b
