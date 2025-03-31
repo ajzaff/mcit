@@ -10,7 +10,6 @@ type searchOptions struct {
 	maxIters      int64
 	continuation  *Continuation
 	expandShuffle bool
-	exhaustable   bool
 	root          *NodeStat
 	done          bool
 	searchStats   *SearchStats
@@ -20,7 +19,6 @@ func newSearchOptions() *searchOptions {
 	return &searchOptions{
 		src:           rand.NewPCG(1337, 0xBEEF),
 		expandShuffle: true,
-		exhaustable:   true,
 		searchStats:   newSearchStats(),
 	}
 }
@@ -45,9 +43,6 @@ func DoneAfter(d time.Duration) Option {
 			opts.done = true
 		}()
 	}}
-}
-func Exhaustable(exhaustable bool) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.exhaustable = exhaustable }}
 }
 func MaxIters(n int64) Option { return Option{preFn: func(opts *searchOptions) { opts.maxIters = n }} }
 func UseContinuation(c *Continuation) Option {

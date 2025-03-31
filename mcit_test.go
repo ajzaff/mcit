@@ -88,11 +88,13 @@ func TestSearchFloatRange(t *testing.T) {
 
 		if len(selector.Actions) < 30 {
 			results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
+		} else {
+			results.Replace = true // Keep leaves in the frontier forever.
 		}
 
 		return
 	}, MaxVariation(res), DetailedSearchStats(searchStats), Histogram(countHist, func(ns *NodeStat) float64 { return ns.Runs }),
-		Exhaustable(true), DoneAfter(500*time.Millisecond))
+		DoneAfter(500*time.Millisecond))
 
 	t.Logf("%#v\n", countHist)
 	t.Logf("%#v\n", searchStats)

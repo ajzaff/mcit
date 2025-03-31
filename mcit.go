@@ -7,8 +7,16 @@ import (
 
 // RunResults contains results returned from the user search function.
 type RunResults struct {
-	Expand   []string
-	Priors   []float64
+	// Expand is the slice of actions available from this node which should be available as children.
+	// Expand may be a subset of all possible actions. See Replace for tips
+	// implementing partial expansion.
+	Expand []string
+	// Priors is a slice of prior values to apply to new expanded nodes.
+	// Priors may be empty in which case the default prior value is used.
+	Priors []float64
+	// Replace can be set to true when the node should be returned to the frontier queue.
+	// This is useful when allowing nodes to be partially expanded on each new visit OR
+	// when the node is a leaf node of the current search and we want to repeatedly explore it.
 	Replace  bool
 	Minimize bool
 	Count    float64
@@ -76,7 +84,9 @@ func Search(runFn Func, opts ...Option) {
 	}()
 
 	replay := make([]string, 0, 64)
-	for ; (searchOpts.maxIters == 0 || iters < searchOpts.maxIters) && (!searchOpts.exhaustable || len(frontier) > 0); iters++ {
+	maxItersDefined := searchOpts.maxIters > 0
+
+	for {
 		// 1. Select a frontier node from the frontier heap and construct replay actions.
 		curr := frontier[0]
 
@@ -113,7 +123,7 @@ func Search(runFn Func, opts ...Option) {
 		// 	2d. (optional) Exhaust the frontier node (or keep it around for next time).
 		//                 The exhaust logic by default requires that some other conditions hold
 		//                 To avoid the simulation running out of frontier values.
-		if !results.Replace && (searchOpts.exhaustable || len(results.Expand) > 0) {
+		if !results.Replace {
 			heap.Remove((*byUCB1)(&frontier), curr.frontierIdx)
 		}
 
@@ -127,10 +137,21 @@ func Search(runFn Func, opts ...Option) {
 			}
 		}
 
-		if searchOpts.done { //	3a. (optional) Stop search if done.
+		// 	3. State keeping and termination.
+		iters++ //	3a. Increment iterations.
+
+		if searchOpts.done { //	3b. (optional) Stop search if done.
 			return
 		}
 
-		// 3b. Restart from step 1.
+		if maxItersDefined && iters >= searchOpts.maxIters { //	3c. End search when max iters is reached.
+			return
+		}
+
+		if len(frontier) == 0 { // 3d. Exhaust when the frontier is empty.
+			return
+		}
+
+		// 4. Restart from step 1.
 	}
 }
