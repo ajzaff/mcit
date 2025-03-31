@@ -127,10 +127,8 @@ func Search(runFn Func, opts ...Option) {
 			}
 		}
 
-		select {
-		case <-searchOpts.done: //	3a. (optional) Stop search if done.
+		if searchOpts.done { //	3a. (optional) Stop search if done.
 			return
-		default:
 		}
 
 		// 3b. Restart from step 1.

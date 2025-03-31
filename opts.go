@@ -12,7 +12,7 @@ type searchOptions struct {
 	expandShuffle bool
 	exhaustable   bool
 	root          *NodeStat
-	done          <-chan struct{}
+	done          bool
 	searchStats   *SearchStats
 }
 
@@ -31,16 +31,19 @@ type Option struct {
 }
 
 func Done(done <-chan struct{}) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.done = done }}
+	return Option{preFn: func(opts *searchOptions) {
+		go func() {
+			<-done
+			opts.done = true
+		}()
+	}}
 }
 func DoneAfter(d time.Duration) Option {
 	return Option{preFn: func(opts *searchOptions) {
-		done := make(chan struct{})
 		go func() {
 			<-time.After(d)
-			done <- struct{}{}
+			opts.done = true
 		}()
-		opts.done = done
 	}}
 }
 func Exhaustable(exhaustable bool) Option {
