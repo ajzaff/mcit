@@ -1,9 +1,8 @@
 package mcit
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"testing"
-	"time"
 )
 
 func TestSearch(t *testing.T) {
@@ -52,8 +51,6 @@ func TestSearch(t *testing.T) {
 func TestSearchFloatRange(t *testing.T) {
 	const maxIters = 1000
 
-	res := new(NodeStat)
-
 	x := func(actions []string, loCmd, hiCmd string) float64 {
 		lo, hi := -100., 100.
 
@@ -77,32 +74,38 @@ func TestSearchFloatRange(t *testing.T) {
 
 	countHist := MakeHist(DefaultRunBins())
 
+	var (
+		bestA float64
+		bestB float64
+	)
+
 	// Attempts to solve the equation: 2a^2 + 2b - 100 = 0.
 	Search(func(selector NodeSelector) (results RunResults) {
 		a := x(selector.Actions, "lo_a", "hi_a")
 		b := x(selector.Actions, "lo_b", "hi_b")
 
 		got := objective(a, b)
+
 		results.Value = -loss(got)
 		results.Count = 1
+
+		if loss(got) == 0 {
+			bestA = a
+			bestB = b
+			results.Done = true
+			return
+		}
 
 		if len(selector.Actions) < 30 {
 			results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
 		} else {
-			results.Replace = true // Keep leaves in the frontier forever.
+			// results.Replace = true // Keep leaves in the frontier forever.
 		}
 
 		return
-	}, MaxVariation(res), DetailedSearchStats(searchStats), Histogram(countHist, func(ns *NodeStat) float64 { return ns.Runs }),
-		DoneAfter(500*time.Millisecond))
+	}, DetailedSearchStats(searchStats), Histogram(countHist, func(ns Stat) float64 { return ns.Runs }),
+		MaxIters(1000))
 
-	t.Logf("%#v\n", countHist)
-	t.Logf("%#v\n", searchStats)
-	t.Log(res)
-	t.Log(res.Line())
-	a, b := x(res.Line(), "lo_a", "hi_a"), x(res.Line(), "lo_b", "hi_b")
-	t.Log("a =", a)
-	t.Log("b =", b)
-	t.Log(objective(a, b))
-	t.Log(-loss(objective(a, b)))
+	t.Log("2a^2 + 2b - 100 = 0")
+	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))
 }

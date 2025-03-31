@@ -2,76 +2,27 @@ package mcit
 
 import (
 	"math"
-	"slices"
 )
 
-type NodeStat struct {
-	Parent   *NodeStat
-	Children map[string]*NodeStat
-
-	Action      string
-	Height      int
-	Priority    float64
-	Prior       float64
-	Runs        float64
-	Value       float64
-	Payload     any
-	frontierIdx int
-	Minimize    bool
+type Stat struct {
+	Action   string
+	Priority float64
+	Prior    float64
+	Runs     float64
+	Value    float64
+	Minimize bool
 }
 
-func newRootStat() *NodeStat { return &NodeStat{frontierIdx: -1, Prior: 1} }
-
-func (parent *NodeStat) NewChild(action string) (child *NodeStat, created bool) {
-	if child, found := parent.Children[action]; found {
-		return child, false
-	}
-	child = &NodeStat{
-		Parent:      parent,
-		Height:      parent.Height + 1,
-		frontierIdx: -1,
-		Prior:       1,
-		Action:      action,
-	}
-	if parent.Children == nil {
-		parent.Children = map[string]*NodeStat{}
-	}
-	parent.Children[action] = child
-	return child, true
-}
-
-// Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
-// without modifying the original stat object. The tree Height is not reset.
-func (s *NodeStat) Detatched() *NodeStat {
-	var copy NodeStat
-	copy = *s
-	copy.Parent = nil
-	copy.Children = nil
-	copy.frontierIdx = -1
-	return &copy
-}
-
-func (n *NodeStat) Exhausted() bool { return n.frontierIdx == -1 }
-
-func (n *NodeStat) Score() float64 {
+func (n Stat) Score() float64 {
 	if n.Runs == 0 {
 		return math.Inf(-1)
 	}
 	return n.Value / n.Runs
 }
 
-// ScoreSquared maps all finite scores v to v*v.
-func (n *NodeStat) ScoreSquared() float64 {
-	v := n.Score()
-	if math.IsInf(v, 0) {
-		return v
-	}
-	return v * v
-}
+func (n *Stat) RecomputePriority() { n.Priority = n.ComputePriority() }
 
-func (n *NodeStat) RecomputePriority() { n.Priority = n.ComputePriority() }
-
-func (n *NodeStat) ComputePriority() float64 {
+func (n Stat) ComputePriority() float64 {
 	if n.Runs == 0 {
 		return math.Inf(+1)
 	}
@@ -82,32 +33,43 @@ func (n *NodeStat) ComputePriority() float64 {
 	return (value + n.Prior*exploreTerm) / n.Runs
 }
 
-func (s *NodeStat) Reset() {
-	s.Parent = nil
+func (s *Stat) Reset() {
 	s.Action = ""
-	s.Height = -1
 	s.Priority = math.Inf(-1)
 	s.Runs = 0
 }
 
-func (s *NodeStat) Line() []string { return s.AppendLine(nil) }
-
-func (s *NodeStat) AppendLine(buf []string) []string {
-	i := len(buf)
-	buf = slices.Grow(buf[i:], 1+s.Height)
-	for ; s.Parent != nil; s = s.Parent {
-		buf = append(buf, s.Action)
+func compareMaxStat(a, b Stat) int {
+	as, bs := a.Score(), b.Score()
+	if as < bs {
+		return +1
 	}
-	slices.Reverse(buf[i:])
-	return buf
+	if as > bs {
+		return -1
+	}
+	return 0
 }
 
-func (s *NodeStat) Hist(hist Hist, valueFn func(*NodeStat) float64) {
-	x := valueFn(s)
-	hist.Insert(x)
-	for _, child := range s.Children {
-		child.Hist(hist, valueFn)
+func compareMinStat(a, b Stat) int {
+	as, bs := a.Score(), b.Score()
+	if as < bs {
+		return -1
 	}
+	if as > bs {
+		return +1
+	}
+	return 0
+}
+
+func compareStatPopularity(a, b Stat) int {
+	ar, br := a.Runs, b.Runs
+	if ar < br {
+		return +1
+	}
+	if ar > br {
+		return -1
+	}
+	return 0
 }
 
 type SearchStats struct {
@@ -115,7 +77,7 @@ type SearchStats struct {
 	Iterations         int64
 	NodeCount          int64
 	LeafCount          int64
-	MaxFrontierSize    int64
+	MaxFrontierSize    int64 // FIXME: No longer using frontier size.
 	ExhaustedNodes     int64
 	MaxDepthRun        int64
 	MaxDepth           int64

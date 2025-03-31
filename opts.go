@@ -10,7 +10,7 @@ type searchOptions struct {
 	maxIters      int64
 	continuation  *Continuation
 	expandShuffle bool
-	root          *NodeStat
+	root          *Node
 	done          bool
 	searchStats   *SearchStats
 }
@@ -56,60 +56,44 @@ func ExpandShuffle(expandShuffle bool) Option {
 }
 func DetailedSearchStats(stats *SearchStats) Option {
 	return Option{preFn: func(opts *searchOptions) { opts.searchStats = stats }, postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *NodeStat) bool {
+		visitNodes(opts.root, func(n *Node) bool {
 			opts.searchStats.NodeCount++
 			if len(n.Children) == 0 {
 				opts.searchStats.LeafCount++
 			}
-			if n.Exhausted() {
+			if n.Exhausted {
 				opts.searchStats.ExhaustedNodes++
 			}
 			return true
 		})
 	}}
 }
-func BestVariation(stat *NodeStat) Option {
+func MaxVariation(r *rand.Rand, stat *Node) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		if stat == nil {
 			return
 		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(maxNodeStrictlyPositive))
+		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareMaxStat))
 	}}
 }
 
-func WorstVariation(stat *NodeStat) Option {
+func MinVariation(r *rand.Rand, stat *Node) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		if stat == nil {
 			return
 		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(minNodeStrictlyPositive))
+		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareMinStat))
 	}}
 }
-func MostPopularVariation(stat *NodeStat) Option {
+func MostPopularVariation(r *rand.Rand, stat *Node) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		if stat == nil {
 			return
 		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(mostPopularNode))
+		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareStatPopularity))
 	}}
 }
-func MinVariation(stat *NodeStat) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *chooseNode(nil, opts.root, minNode)
-	}}
-}
-func MaxVariation(stat *NodeStat) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *chooseNode(nil, opts.root, maxNode)
-	}}
-}
-func SearchTreeShallow(stat *NodeStat) Option {
+func SearchTreeShallow(stat *Node) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		if stat == nil {
 			return
@@ -117,7 +101,7 @@ func SearchTreeShallow(stat *NodeStat) Option {
 		*stat = *opts.root.Detatched()
 	}}
 }
-func SearchTree(stat *NodeStat) Option {
+func SearchTree(stat *Node) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		if stat == nil {
 			return
@@ -125,22 +109,22 @@ func SearchTree(stat *NodeStat) Option {
 		*stat = *opts.root
 	}}
 }
-func Histogram(hist Hist, valueFn func(*NodeStat) float64) Option {
+func Histogram(hist Hist, valueFn func(Stat) float64) Option {
 	return Option{postFn: func(opts *searchOptions) {
-		for n := range nodeIter(opts.root) {
-			x := valueFn(n)
+		for e := range statIter(opts.root) {
+			x := valueFn(e)
 			hist.Insert(x)
 		}
 	}}
 }
-func Visit(visitFn func(*NodeStat) bool) Option {
+func Visit(visitFn func(*Node) bool) Option {
 	return Option{postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *NodeStat) bool { return visitFn(n) })
+		visitNodes(opts.root, func(n *Node) bool { return visitFn(n) })
 	}}
 }
-func Count(results []int64, countFns ...func(*NodeStat) int64) Option {
+func Count(results []int64, countFns ...func(*Node) int64) Option {
 	return Option{postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *NodeStat) bool {
+		visitNodes(opts.root, func(n *Node) bool {
 			for i, f := range countFns {
 				results[i] += f(n)
 			}
