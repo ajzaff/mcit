@@ -11,12 +11,14 @@ type byUCB1 []*NodeStat
 
 func (a byUCB1) Len() int { return len(a) }
 func (a byUCB1) Swap(i, j int) {
+	// Swap the frontier elements while keeping track of the new indices.
 	a[i].frontierIdx, a[j].frontierIdx = a[j].frontierIdx, a[i].frontierIdx
 	a[i], a[j] = a[j], a[i]
 }
 func (a byUCB1) Less(i, j int) bool {
 	if ui, uj := a[i].Priority, a[j].Priority; ui != uj {
-		return ui < uj
+		// Higher priority nodes first.
+		return ui > uj
 	}
 	if hi, hj := a[i].Height, a[j].Height; hi != hj {
 		// When priorities are equal (often +∞), we prioritize nodes closer to root.
@@ -30,6 +32,8 @@ func (a *byUCB1) Push(x any) {
 	n := len(*a)
 	e := x.(*NodeStat)
 	*a = append(*a, e)
+	// Now is a good time to compute the priority.
+	// Set the frontier index to the current position.
 	e.RecomputePriority()
 	e.frontierIdx = n
 }
@@ -37,6 +41,7 @@ func (a *byUCB1) Pop() any {
 	n := len(*a) - 1
 	x := (*a)[n]
 	*a = (*a)[:n]
+	// Reset the frontier index as it is no longer valid.
 	x.frontierIdx = -1
 	return x
 }
@@ -56,14 +61,14 @@ func minNode(a, b *NodeStat) *NodeStat {
 }
 
 func maxNodeStrictlyPositive(a, b *NodeStat) *NodeStat {
-	if a == nil || a.ConvexScore() < b.ConvexScore() {
+	if a == nil || a.ScoreSquared() < b.ScoreSquared() {
 		return b
 	}
 	return a
 }
 
 func minNodeStrictlyPositive(a, b *NodeStat) *NodeStat {
-	if a == nil || b.ConvexScore() < a.ConvexScore() {
+	if a == nil || b.ScoreSquared() < a.ScoreSquared() {
 		return b
 	}
 	return a

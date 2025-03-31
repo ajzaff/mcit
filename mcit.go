@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 )
 
+// RunResults contains results returned from the user search function.
 type RunResults struct {
 	Expand   []string
 	Priors   []float64
@@ -12,15 +13,34 @@ type RunResults struct {
 	Minimize bool
 	Count    float64
 	Value    float64
-	Done     bool
+	// Payload contains optional user generated payload to store in the resulting tree Node.
+	// This can be a reference to the user land state of the node which can be more convenient
+	// when direct replay is difficult.
+	Payload any
+	Done    bool
 }
 
-type Func func(actions []string) (results RunResults)
+// NodeSelector provides a choice of methods to select the current frontier node.
+// Either a slice of actions, or a reference to the Payload returned from RunResults.
+type NodeSelector struct {
+	Actions []string
+	Payload any
+}
 
+// Func is a search function containing user code which selects a frontier node and returns the results of experiments on it.
+type Func func(selector NodeSelector) (results RunResults)
+
+// Continuation is a structure which contains a root node to pass to continue a previous search from memory.
 type Continuation struct {
 	root *NodeStat
 }
 
+// Search is the main function from this package which implements Monte-carlo tree search.
+//
+// It accepts runFn containing user search code and calls it on each frontier node in accordance with the
+// multi-armed bandit policy. Using a regret-optimal combination of exploration and exploitation.
+//
+// It takes options to configure aspects of the search.
 func Search(runFn Func, opts ...Option) {
 	// 0. Initialize state.
 	searchOpts := newSearchOptions()
@@ -63,7 +83,7 @@ func Search(runFn Func, opts ...Option) {
 		replay = curr.AppendLine(replay[:0])
 
 		// 2. Run simulations at the frontier node.
-		results := runFn(replay)
+		results := runFn(NodeSelector{replay, curr.Payload})
 
 		//	2a. Copy minimize setting to current node.
 		curr.Minimize = results.Minimize

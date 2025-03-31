@@ -15,6 +15,7 @@ type NodeStat struct {
 	Prior       float64
 	Runs        float64
 	Value       float64
+	Payload     any
 	frontierIdx int
 	Minimize    bool
 }
@@ -40,7 +41,7 @@ func (parent *NodeStat) NewChild(action string) (child *NodeStat, created bool) 
 }
 
 // Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
-// without modifying the original stat object.
+// without modifying the original stat object. The tree Height is not reset.
 func (s *NodeStat) Detatched() *NodeStat {
 	var copy NodeStat
 	copy = *s
@@ -59,8 +60,8 @@ func (n *NodeStat) Score() float64 {
 	return n.Value / n.Runs
 }
 
-// ConvexScore maps all finite scores v to v*v.
-func (n *NodeStat) ConvexScore() float64 {
+// ScoreSquared maps all finite scores v to v*v.
+func (n *NodeStat) ScoreSquared() float64 {
 	v := n.Score()
 	if math.IsInf(v, 0) {
 		return v

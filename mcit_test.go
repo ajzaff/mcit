@@ -7,8 +7,8 @@ import (
 )
 
 func TestSearch(t *testing.T) {
-	Search(func(actions []string) (results RunResults) {
-		if len(actions) < 10 {
+	Search(func(selector NodeSelector) (results RunResults) {
+		if len(selector.Actions) < 10 {
 			results.Expand = []string{
 				"a",
 				"b",
@@ -26,7 +26,7 @@ func TestSearch(t *testing.T) {
 
 		// Provide a slight incentive to picking "a" over "b".
 		lambda := 1.0
-		for _, a := range actions {
+		for _, a := range selector.Actions {
 			if a == "a" {
 				lambda *= 0.99
 			} else if a == "b" {
@@ -78,15 +78,15 @@ func TestSearchFloatRange(t *testing.T) {
 	countHist := MakeHist(DefaultRunBins())
 
 	// Attempts to solve the equation: 2a^2 + 2b - 100 = 0.
-	Search(func(actions []string) (results RunResults) {
-		a := x(actions, "lo_a", "hi_a")
-		b := x(actions, "lo_b", "hi_b")
+	Search(func(selector NodeSelector) (results RunResults) {
+		a := x(selector.Actions, "lo_a", "hi_a")
+		b := x(selector.Actions, "lo_b", "hi_b")
 
 		got := objective(a, b)
 		results.Value = -loss(got)
 		results.Count = 1
 
-		if len(actions) < 30 {
+		if len(selector.Actions) < 30 {
 			results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
 		}
 
