@@ -1,11 +1,15 @@
 package mcit
 
-import "math/rand/v2"
+import (
+	"math/rand/v2"
+	"time"
+)
 
 // Result of a search containing the root search node and total number of iterations of MCTS performed.
 type Result struct {
 	Root       *Node
 	Iterations int
+	Duration   time.Duration
 }
 
 // Search is the main function from this package which implements Monte-carlo tree search.
@@ -29,12 +33,14 @@ func Search(runFn Func, opts ...Option) (result Result) {
 	}
 
 	var iters int
+	start := time.Now()
 
 	defer func() {
 		// 4. Store search results.
 		result = Result{
 			Root:       root,
 			Iterations: iters,
+			Duration:   time.Since(start),
 		}
 	}()
 
