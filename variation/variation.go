@@ -1,4 +1,4 @@
-package visitor
+package variation
 
 import (
 	"math/rand/v2"
