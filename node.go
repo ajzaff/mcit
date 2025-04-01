@@ -25,10 +25,11 @@ func newRoot() *Node { return &Node{} }
 
 // NewChild creates a new child on the parent Node.
 // Pushes a node stat to the list of bandits.
-func (parent *Node) NewChild(action string, prior float64) (child *Node, created bool) {
+func (parent *Node) NewChild(action string, prior float32) (child *Node, created bool) {
 	if child, found := parent.Children[action]; found {
 		return child, false
 	}
+	// FIXME: Defer child creation until node is actually opened.
 	child = &Node{
 		Parent: parent,
 		Height: parent.Height + 1,
@@ -39,7 +40,7 @@ func (parent *Node) NewChild(action string, prior float64) (child *Node, created
 	}
 	parent.Children[action] = child
 
-	stat := Stat{Action: action, Prior: prior, Priority: math.Inf(+1)}
+	stat := Stat{Action: action, Prior: prior, Priority: float32(math.Inf(+1))}
 	// NOTE: We don't use heap.Push here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
 	//       LazyHeap keeps track of the first index of frontier nodes.
 	parent.append(stat)

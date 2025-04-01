@@ -12,7 +12,7 @@ func TestSearch(t *testing.T) {
 				"a",
 				"b",
 			}
-			results.Priors = []float64{
+			results.Priors = []float32{
 				1,
 				1,
 			}
@@ -35,9 +35,9 @@ func TestSearch(t *testing.T) {
 
 		const experiments = 100
 
-		value := 0.0
+		value := float32(0)
 		for range experiments {
-			value += rand.ExpFloat64() / lambda
+			value += float32(rand.ExpFloat64() / lambda)
 		}
 
 		results.Replace = true
@@ -51,7 +51,7 @@ func TestSearch(t *testing.T) {
 func TestSearchFloatRange(t *testing.T) {
 	const maxIters = 1000
 
-	x := func(actions []string, loCmd, hiCmd string) float64 {
+	x := func(actions []string, loCmd, hiCmd string) float32 {
 		lo, hi := -100., 100.
 
 		for _, a := range actions {
@@ -63,19 +63,20 @@ func TestSearchFloatRange(t *testing.T) {
 		}
 
 		n := lo + (hi-lo)/2
-		return n
+		return float32(n)
 	}
 
-	objective := func(a, b float64) float64 { return 2*a*a + 2*b - 100 }
+	objective := func(a, b float32) float32 { return 2*a*a + 2*b - 100 }
 
-	loss := func(objective float64) float64 { a := 0 - objective; return a * a }
+	loss := func(objective float32) float32 { a := 0 - objective; return a * a }
 
 	var (
-		bestA float64
-		bestB float64
+		bestA float32
+		bestB float32
 	)
 
 	// Attempts to solve the equation: 2a^2 + 2b - 100 = 0.
+	epsilon := float32(0)
 	results := Search(func(selector NodeSelector) (results RunResults) {
 		a := x(selector.Actions, "lo_a", "hi_a")
 		b := x(selector.Actions, "lo_b", "hi_b")
@@ -85,18 +86,14 @@ func TestSearchFloatRange(t *testing.T) {
 		results.Value = -loss(got)
 		results.Count = 1
 
-		if loss(got) == 0 {
+		if loss(got) <= epsilon {
 			bestA = a
 			bestB = b
 			results.Done = true
 			return
 		}
 
-		if len(selector.Actions) < 30 {
-			results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
-		} else {
-			// results.Replace = true // Keep leaves in the frontier forever.
-		}
+		results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
 
 		return
 	}, MaxIters(10))
@@ -104,4 +101,5 @@ func TestSearchFloatRange(t *testing.T) {
 	t.Log("2a^2 + 2b - 100 = 0")
 	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))
 	t.Log(results.Iterations, "iterations")
+	t.Log(results.Duration)
 }

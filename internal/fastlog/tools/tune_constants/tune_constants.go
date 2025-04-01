@@ -72,7 +72,7 @@ func main() {
 	}, mcit.RandSource(r), mcit.MaxIters(1_000_000))
 
 	var maxNode *mcit.Node
-	maxNMSE := perft.Reduce(result.Root, math.Inf(-1), func(n *mcit.Node, bestNMSE float64) float64 {
+	maxNMSE := perft.Reduce(result.Root, float32(math.Inf(-1)), func(n *mcit.Node, bestNMSE float32) float32 {
 		var bestAction string
 		for stat := range n.StatSeq() {
 			if nmse := stat.Score(); bestNMSE < nmse {

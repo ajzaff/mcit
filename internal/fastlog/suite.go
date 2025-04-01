@@ -6,14 +6,14 @@ import (
 )
 
 // CalculateSuiteMSE returns the MSE for the given constants on the full suite.
-func CalculateSuiteMSE(c0, c1 float32) (mse float64) {
+func CalculateSuiteMSE(c0, c1 float32) (mse float32) {
 	for _, example := range suite {
 		want := example.Log2
 		got := fastLog2(example.X, c0, c1)
-		delta := float64(got - want)
+		delta := got - want
 		mse += delta * delta
 	}
-	mse /= float64(len(suite))
+	mse /= float32(len(suite))
 	return
 }
 

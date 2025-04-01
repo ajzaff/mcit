@@ -7,12 +7,12 @@ import (
 
 func TestMSESmallX(t *testing.T) {
 	// Intuitively, MSE for small X should be lower than the full suite MSE.
-	var mse float64
+	var mse float32
 	for i := range 256 {
 		x := float32(i + 1)
 		res := Log2(x)
 		want := float32(math.Log2(float64(i + 1)))
-		delta := float64(want - res)
+		delta := want - res
 		mse += delta * delta
 	}
 	mse /= 256

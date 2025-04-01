@@ -74,7 +74,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		for i, action := range results.Expand {
 			//	2ca. (optional) Priors, if provided, should match the slice of expanded nodes.
 			// FIXME: Implement prior normalization and renormalizaion.
-			prior := 1.
+			prior := float32(1)
 			if len(results.Priors) > 0 {
 				prior = results.Priors[i]
 			}

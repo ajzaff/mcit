@@ -23,16 +23,16 @@ func DefaultRunBins() []float64      { return slices.Clone(runBins) }
 func DefaultScoreBins() []float64    { return slices.Clone(scoreBins) }
 func DefaultPriorityBins() []float64 { return slices.Clone(priorityBins) }
 
-type HistBin[T int64 | float64] struct {
+type HistBin[T int64 | float32] struct {
 	Max   T
 	Count int64
 }
 
-type Hist[T int64 | float64] struct {
+type Hist[T int64 | float32] struct {
 	Bins []HistBin[T]
 }
 
-func MakeHist[T int64 | float64](bins []T) Hist[T] {
+func MakeHist[T int64 | float32](bins []T) Hist[T] {
 	b := make([]HistBin[T], len(bins))
 	for i, v := range bins {
 		b[i].Max = v
@@ -40,7 +40,7 @@ func MakeHist[T int64 | float64](bins []T) Hist[T] {
 	return Hist[T]{Bins: b}
 }
 
-func Fill[T int64 | float64](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
+func Fill[T int64 | float32](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
 	for n := range NodeSeq(root) {
 		for e := range n.StatSeq() {
 			x := valueFn(e)

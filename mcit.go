@@ -8,14 +8,14 @@ type RunResults struct {
 	Expand []string
 	// Priors is a slice of prior values to apply to new expanded nodes.
 	// Priors may be empty in which case the default prior value is used.
-	Priors []float64
+	Priors []float32
 	// Replace can be set to true when the node should be returned to the frontier queue.
 	// This is useful when allowing nodes to be partially expanded on each new visit OR
 	// when the node is a leaf node of the current search and we want to repeatedly explore it.
 	Replace  bool
 	Minimize bool
-	Count    float64
-	Value    float64
+	Count    float32
+	Value    float32
 	// Payload contains optional user generated payload to store in the resulting tree Node.
 	// This can be a reference to the user land state of the node which can be more convenient
 	// when direct replay is difficult.
