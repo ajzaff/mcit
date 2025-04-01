@@ -14,11 +14,7 @@ type Node struct {
 	Action  string
 	Height  int
 	Payload any
-	// Frontier is set to the index of the first Bandit which has never been tried
-	// Otherwise it equals len(Bandits).
-	Frontier int
-	// Bandits nodes which
-	Bandits []Stat
+	LazyQueue
 	// Exhausted marks whether we are done with this node.
 	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
 	// 	* When false, we will generate more simulations (and possibly children) in the future.
@@ -46,8 +42,8 @@ func (parent *Node) NewChild(action string, prior float64) (child *Node, created
 
 	stat := Stat{Action: action, Prior: prior, Priority: math.Inf(+1)}
 	// NOTE: We don't use heap.Push here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
-	//       parent.Frontier keeps track of the first index of frontier nodes.
-	parent.Bandits = append(parent.Bandits, stat)
+	//       LazyHeap keeps track of the first index of frontier nodes.
+	parent.append(stat)
 
 	return child, true
 }
@@ -96,32 +92,6 @@ func (s *Node) Hist(hist Hist, valueFn func(Stat) float64) {
 	for _, child := range s.Children {
 		child.Hist(hist, valueFn)
 	}
-}
-
-type byUCB1 []Stat
-
-func (a byUCB1) Len() int      { return len(a) }
-func (a byUCB1) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byUCB1) Less(i, j int) bool {
-	if ui, uj := a[i].Priority, a[j].Priority; ui != uj {
-		// Higher priority nodes first.
-		return ui > uj
-	}
-	// When priorities are equal (often +∞), fall back to prior comparison.
-	return a[i].Prior > a[j].Prior
-}
-func (a *byUCB1) Push(x any) {
-	e := x.(Stat)
-	// Now is a good time to compute the priority.
-	// Set the frontier index to the current position.
-	e.RecomputePriority()
-	*a = append(*a, e)
-}
-func (a *byUCB1) Pop() any {
-	n := len(*a) - 1
-	x := (*a)[n]
-	*a = (*a)[:n]
-	return x
 }
 
 func selectChildFunc(r *rand.Rand, cmpFn func(a, b Stat) int) func(*Node) *Node {

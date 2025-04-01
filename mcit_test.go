@@ -108,4 +108,5 @@ func TestSearchFloatRange(t *testing.T) {
 
 	t.Log("2a^2 + 2b - 100 = 0")
 	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))
+	t.Log(searchStats.Iterations, "iterations")
 }

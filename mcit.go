@@ -1,9 +1,6 @@
 package mcit
 
-import (
-	"container/heap"
-	"math/rand/v2"
-)
+import "math/rand/v2"
 
 // RunResults contains results returned from the user search function.
 type RunResults struct {
@@ -88,20 +85,7 @@ func Search(runFn Func, opts ...Option) {
 		frontier := root
 		replay = replay[:0]
 		for frontier.Exhausted && len(frontier.Bandits) > 0 {
-			if frontier.Frontier < len(frontier.Bandits) {
-				// We have at least one node which has never been tried before.
-				// Use this time to fix the position in the heap so we can select it.
-				// Nodes which have never been tried before always take priority.
-				//
-				// Waiting until now to fix this position is largely an optimization
-				// as we don't expect the majority of nodes of large trees to be tried
-				// we don't need to waste time with the O(log N) heap.Push operation.
-				heap.Fix((*byUCB1)(&frontier.Bandits), frontier.Frontier)
-				frontier.Frontier++
-			}
-			// NOTE: We always take the first action.
-			// If we ever implemented a temperature feature, we'd need to keep track of this index.
-			action := frontier.Bandits[0].Action
+			action := frontier.next().Action
 			next := frontier.Children[action]
 			if next == nil {
 				break
@@ -139,17 +123,13 @@ func Search(runFn Func, opts ...Option) {
 			head.Bandits[0].Runs += results.Count
 			head.Bandits[0].Value += results.Value
 			head.Bandits[0].RecomputePriority()
-			// NOTE: We could modify this to only call heap.down,
-			//       but we'll make no such assumption if this were any index > 0.
-			// NOTE: We don't bother to use bandits[:frontier] because the frontier nodes
-			//       are always +∞ priority.
-			heap.Fix((*byUCB1)(&head.Bandits), 0)
+			head.down(0)
 		}
 
 		// 	3. State keeping and termination.
 		iters++ //	3a. Increment iterations.
 
-		if searchOpts.done { //	3b. (optional) Stop search if done.
+		if searchOpts.done || results.Done { //	3b. (optional) Stop search if done.
 			return
 		}
 
