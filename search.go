@@ -2,13 +2,19 @@ package mcit
 
 import "math/rand/v2"
 
+// Result of a search containing the root search node and total number of iterations of MCTS performed.
+type Result struct {
+	Root       *Node
+	Iterations int
+}
+
 // Search is the main function from this package which implements Monte-carlo tree search.
 //
 // It accepts runFn containing user search code and calls it on each frontier node in accordance with the
 // multi-armed bandit policy. Using a regret-optimal combination of exploration and exploitation.
 //
 // It takes options to configure aspects of the search.
-func Search(runFn Func, opts ...Option) (root *Node) {
+func Search(runFn Func, opts ...Option) (result Result) {
 	// 0. Initialize state.
 	searchOpts := newSearchOptions()
 	// 0aa. Execute pre-run hooks and apply options.
@@ -19,16 +25,19 @@ func Search(runFn Func, opts ...Option) (root *Node) {
 	}
 
 	//	0ba. Initialize root.
-	if root = searchOpts.root; root == nil {
-		searchOpts.root = newRoot()
-		root = searchOpts.root
+	var root *Node
+	if root = searchOpts.continuation; root == nil {
+		root = newRoot()
 	}
 
 	//	0c. Schedule post-run hooks.
-	iters := int64(0)
+	var iters int
+
 	defer func() {
-		searchOpts.searchStats.Iterations = iters
-		// searchOpts.searchStats.MaxFrontierSize = int64(len(frontier))
+		result = Result{
+			Root:       root,
+			Iterations: iters,
+		}
 		// 4. Execute post-run hooks.
 		for _, o := range opts {
 			if o.postFn != nil {

@@ -1,5 +1,7 @@
 package mcit
 
+import "iter"
+
 // LazyQueue contains the multi-armed bandit heap queue.
 //
 // It has a few differences from a regular heap queue:
@@ -14,6 +16,22 @@ type LazyQueue struct {
 }
 
 func (h *LazyQueue) hasLazyElements() bool { return h.lazyIndex < h.Len() }
+
+// StatSeq returns an iterator over the Stats for a Node in the correct priority order.
+func (h *LazyQueue) StatSeq() iter.Seq[Stat] {
+	return func(yield func(Stat) bool) {
+		for i := h.lazyIndex; i < h.Len(); i++ {
+			if !yield(h.Bandits[i]) {
+				return
+			}
+		}
+		for i := range h.lazyIndex {
+			if !yield(h.Bandits[i]) {
+				return
+			}
+		}
+	}
+}
 
 func (h *LazyQueue) next() Stat {
 	if h.hasLazyElements() {

@@ -1,9 +1,7 @@
 package mcit
 
 import (
-	"iter"
 	"math"
-	"math/rand/v2"
 	"slices"
 )
 
@@ -83,77 +81,4 @@ func (s *Node) AppendLine(buf []string) []string {
 	}
 	slices.Reverse(buf[i:])
 	return buf
-}
-
-func (s *Node) Hist(hist Hist, valueFn func(Stat) float64) {
-	for _, e := range s.Bandits {
-		x := valueFn(e)
-		hist.Insert(x)
-	}
-	for _, child := range s.Children {
-		child.Hist(hist, valueFn)
-	}
-}
-
-func selectChildFunc(r *rand.Rand, cmpFn func(a, b Stat) int) func(*Node) *Node {
-	return func(root *Node) *Node {
-		// Create an equivalence slice for implementing fair random choice
-		// To tie break between equivalent children according to cmpFn.
-		equal := []Stat{{}}
-		for _, b := range root.Bandits {
-			a := equal[0]
-			switch c := cmpFn(a, b); {
-			case c > 0:
-				// Swap out for a better node, and reset the equivalence slice.
-				equal[0] = b
-				equal = equal[:1]
-			case c == 0:
-				// When equal, add it to the equivalence slice.
-				equal = append(equal, b)
-			}
-		}
-		if len(equal) > 1 {
-			// Fair random choice between equivalent children.
-			i := r.IntN(len(equal))
-			equal[0], equal[i] = equal[i], equal[0]
-		}
-		// When nil, no action was selected.
-		return root.Children[equal[0].Action]
-	}
-}
-
-func getSelectLine(root *Node, selectFn func(*Node) *Node) *Node {
-	for len(root.Children) > 0 {
-		next := selectFn(root)
-		if next == nil {
-			break
-		}
-		root = next
-	}
-	return root
-}
-
-func nodeIter(root *Node) iter.Seq[*Node] {
-	return func(yield func(*Node) bool) { visitNodes(root, yield) }
-}
-
-func visitNodes(root *Node, visitFn func(*Node) bool) {
-	if !visitFn(root) {
-		return
-	}
-	for _, child := range root.Children {
-		visitNodes(child, visitFn)
-	}
-}
-
-func statIter(root *Node) iter.Seq[Stat] {
-	return func(yield func(Stat) bool) {
-		for n := range nodeIter(root) {
-			for _, e := range n.Bandits {
-				if !yield(e) {
-					break
-				}
-			}
-		}
-	}
 }

@@ -7,19 +7,16 @@ import (
 
 type searchOptions struct {
 	src           rand.Source
-	maxIters      int64
-	continuation  *Continuation
+	maxIters      int
+	continuation  *Node
 	expandShuffle bool
-	root          *Node
 	done          bool
-	searchStats   *SearchStats
 }
 
 func newSearchOptions() *searchOptions {
 	return &searchOptions{
 		src:           rand.NewPCG(1337, 0xBEEF),
 		expandShuffle: true,
-		searchStats:   newSearchStats(),
 	}
 }
 
@@ -44,81 +41,15 @@ func DoneAfter(d time.Duration) Option {
 		}()
 	}}
 }
-func MaxIters(n int64) Option { return Option{preFn: func(opts *searchOptions) { opts.maxIters = n }} }
+func MaxIters(n int) Option { return Option{preFn: func(opts *searchOptions) { opts.maxIters = n }} }
 
-// Continuation is a structure which contains a root node to pass to continue a previous search from memory.
-type Continuation struct {
-	root *Node
-}
-
-func UseContinuation(c *Continuation) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.continuation = c; opts.root = c.root }}
+// UseContinuation specifies a root node to continue a previous search from memory.
+func UseContinuation(n *Node) Option {
+	return Option{preFn: func(opts *searchOptions) { opts.continuation = n }}
 }
 func RandSource(src rand.Source) Option {
 	return Option{preFn: func(opts *searchOptions) { opts.src = src }}
 }
 func ExpandShuffle(expandShuffle bool) Option {
 	return Option{preFn: func(opts *searchOptions) { opts.expandShuffle = expandShuffle }}
-}
-func DetailedSearchStats(stats *SearchStats) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.searchStats = stats }, postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *Node) bool {
-			opts.searchStats.NodeCount++
-			if len(n.Children) == 0 {
-				opts.searchStats.LeafCount++
-			}
-			if n.Exhausted {
-				opts.searchStats.ExhaustedNodes++
-			}
-			return true
-		})
-	}}
-}
-func MaxVariation(r *rand.Rand, stat *Node) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareMaxStat))
-	}}
-}
-
-func MinVariation(r *rand.Rand, stat *Node) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareMinStat))
-	}}
-}
-func MostPopularVariation(r *rand.Rand, stat *Node) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareStatPopularity))
-	}}
-}
-func Histogram(hist Hist, valueFn func(Stat) float64) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		for e := range statIter(opts.root) {
-			x := valueFn(e)
-			hist.Insert(x)
-		}
-	}}
-}
-func Visit(visitFn func(*Node) bool) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *Node) bool { return visitFn(n) })
-	}}
-}
-func Count(results []int64, countFns ...func(*Node) int64) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		visitNodes(opts.root, func(n *Node) bool {
-			for i, f := range countFns {
-				results[i] += f(n)
-			}
-			return true
-		})
-	}}
 }

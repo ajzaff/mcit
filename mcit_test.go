@@ -70,17 +70,13 @@ func TestSearchFloatRange(t *testing.T) {
 
 	loss := func(objective float64) float64 { a := 0 - objective; return a * a }
 
-	searchStats := new(SearchStats)
-
-	countHist := MakeHist(DefaultRunBins())
-
 	var (
 		bestA float64
 		bestB float64
 	)
 
 	// Attempts to solve the equation: 2a^2 + 2b - 100 = 0.
-	Search(func(selector NodeSelector) (results RunResults) {
+	results := Search(func(selector NodeSelector) (results RunResults) {
 		a := x(selector.Actions, "lo_a", "hi_a")
 		b := x(selector.Actions, "lo_b", "hi_b")
 
@@ -103,10 +99,9 @@ func TestSearchFloatRange(t *testing.T) {
 		}
 
 		return
-	}, DetailedSearchStats(searchStats), Histogram(countHist, func(ns Stat) float64 { return ns.Runs }),
-		MaxIters(1000))
+	}, MaxIters(10))
 
 	t.Log("2a^2 + 2b - 100 = 0")
 	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))
-	t.Log(searchStats.Iterations, "iterations")
+	t.Log(results.Iterations, "iterations")
 }
