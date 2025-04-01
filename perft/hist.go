@@ -23,24 +23,24 @@ func DefaultRunBins() []float64      { return slices.Clone(runBins) }
 func DefaultScoreBins() []float64    { return slices.Clone(scoreBins) }
 func DefaultPriorityBins() []float64 { return slices.Clone(priorityBins) }
 
-type HistBin struct {
-	Max   float64
+type HistBin[T int64 | float64] struct {
+	Max   T
 	Count int64
 }
 
-type Hist struct {
-	Bins []HistBin
+type Hist[T int64 | float64] struct {
+	Bins []HistBin[T]
 }
 
-func MakeHist(bins []float64) Hist {
-	b := make([]HistBin, len(bins))
+func MakeHist[T int64 | float64](bins []T) Hist[T] {
+	b := make([]HistBin[T], len(bins))
 	for i, v := range bins {
 		b[i].Max = v
 	}
-	return Hist{Bins: b}
+	return Hist[T]{Bins: b}
 }
 
-func Fill(root *mcit.Node, hist Hist, valueFn func(mcit.Stat) float64) {
+func Fill[T int64 | float64](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
 	for n := range NodeSeq(root) {
 		for e := range n.StatSeq() {
 			x := valueFn(e)
@@ -49,8 +49,8 @@ func Fill(root *mcit.Node, hist Hist, valueFn func(mcit.Stat) float64) {
 	}
 }
 
-func (h Hist) Insert(x float64) {
-	i, _ := slices.BinarySearchFunc(h.Bins, HistBin{Max: x}, func(a, b HistBin) int {
+func (h Hist[T]) Insert(x T) {
+	i, _ := slices.BinarySearchFunc(h.Bins, HistBin[T]{Max: x}, func(a, b HistBin[T]) int {
 		if a == b {
 			return 0
 		}
@@ -62,8 +62,8 @@ func (h Hist) Insert(x float64) {
 	h.Bins[i].Count++
 }
 
-func (h Hist) Remove(x float64) {
-	i, _ := slices.BinarySearchFunc(h.Bins, HistBin{Max: x}, func(a, b HistBin) int {
+func (h Hist[T]) Remove(x T) {
+	i, _ := slices.BinarySearchFunc(h.Bins, HistBin[T]{Max: x}, func(a, b HistBin[T]) int {
 		if a == b {
 			return 0
 		}
