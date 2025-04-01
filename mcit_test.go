@@ -6,7 +6,7 @@ import (
 )
 
 func TestSearch(t *testing.T) {
-	Search(func(selector NodeSelector) (results RunResults) {
+	results := Search(func(selector NodeSelector) (results RunResults) {
 		if len(selector.Actions) < 10 {
 			results.Expand = []string{
 				"a",
@@ -40,12 +40,16 @@ func TestSearch(t *testing.T) {
 			value += float32(rand.ExpFloat64() / lambda)
 		}
 
-		results.Replace = true
+		results.Replace = len(selector.Actions) > 0
 		results.Count = experiments
 		results.Value = value
 
 		return
 	}, MaxIters(100))
+
+	t.Log(results.Root.lazyQueue.Bandits)
+	t.Log(results.Iterations)
+	t.Log(results.Duration)
 }
 
 func TestSearchFloatRange(t *testing.T) {

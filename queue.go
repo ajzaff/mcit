@@ -3,15 +3,9 @@ package mcit
 import "iter"
 
 // lazyQueue contains the multi-armed bandit heap queue.
-//
-// It has a few differences from a regular heap queue:
-// 	* an append method which adds a lazy element to the heap.
-//	* a next method which handles promoting the lazy elements and returning the max element.
 type lazyQueue struct {
-	// lazyIndex is set to the index of the first lazy element.
-	// When equal to Len(), indicates all elements are heapified.
-	lazyIndex int
-	// Bandits is a slice of stats representing chosing different actions.
+	lazyIndex int // when lazyIndex < Len(), we have elements to fix.
+	// Bandits is a slice of stats representing different choices of actions (bandit arms).
 	Bandits []Stat
 }
 
@@ -33,26 +27,18 @@ func (h *lazyQueue) StatSeq() iter.Seq[Stat] {
 	}
 }
 
-func (h *lazyQueue) next() Stat {
-	if h.hasLazyElements() {
-		// We have at least one node which has never been tried before.
-		// Use this time to fix the position in the heap so we can select it.
-		// Nodes which have never been tried before always take priority.
-		//
-		// Waiting until now to fix this position is largely an optimization
-		// as we don't expect the majority of nodes of large trees to be tried
-		// we don't need to waste time with the O(log N) heap.Push operation.
-		h.up(h.lazyIndex)
-		h.lazyIndex++
-	}
-	// NOTE: We always take the first action.
-	// If we ever implemented a temperature feature, we'd need to keep track of this index.
-	return h.Bandits[0]
-}
+func (h lazyQueue) top() Stat { return h.Bandits[0] }
 
 func (h *lazyQueue) append(x Stat) { h.Bandits = append(h.Bandits, x) }
 
-func (h *lazyQueue) up(j int) {
+// upLazy calls up on the lazy element.
+// upLazy panics if !h.hasLazyElements().
+func (h *lazyQueue) upLazy() {
+	h.up(h.lazyIndex)
+	h.lazyIndex++
+}
+
+func (h lazyQueue) up(j int) {
 	for {
 		i := (j - 1) / 2 // parent
 		if i == j || !h.less(j, i) {
@@ -63,7 +49,7 @@ func (h *lazyQueue) up(j int) {
 	}
 }
 
-func (h *lazyQueue) down(i0 int) bool {
+func (h lazyQueue) down(i0 int) bool {
 	i := i0
 	n := h.lazyIndex
 	for {
