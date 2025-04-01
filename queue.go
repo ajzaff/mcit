@@ -2,12 +2,12 @@ package mcit
 
 import "iter"
 
-// LazyQueue contains the multi-armed bandit heap queue.
+// lazyQueue contains the multi-armed bandit heap queue.
 //
 // It has a few differences from a regular heap queue:
 // 	* an append method which adds a lazy element to the heap.
 //	* a next method which handles promoting the lazy elements and returning the max element.
-type LazyQueue struct {
+type lazyQueue struct {
 	// lazyIndex is set to the index of the first lazy element.
 	// When equal to Len(), indicates all elements are heapified.
 	lazyIndex int
@@ -15,10 +15,10 @@ type LazyQueue struct {
 	Bandits []Stat
 }
 
-func (h *LazyQueue) hasLazyElements() bool { return h.lazyIndex < h.Len() }
+func (h *lazyQueue) hasLazyElements() bool { return h.lazyIndex < h.Len() }
 
 // StatSeq returns an iterator over the Stats for a Node in the correct priority order.
-func (h *LazyQueue) StatSeq() iter.Seq[Stat] {
+func (h *lazyQueue) StatSeq() iter.Seq[Stat] {
 	return func(yield func(Stat) bool) {
 		for i := h.lazyIndex; i < h.Len(); i++ {
 			if !yield(h.Bandits[i]) {
@@ -33,7 +33,7 @@ func (h *LazyQueue) StatSeq() iter.Seq[Stat] {
 	}
 }
 
-func (h *LazyQueue) next() Stat {
+func (h *lazyQueue) next() Stat {
 	if h.hasLazyElements() {
 		// We have at least one node which has never been tried before.
 		// Use this time to fix the position in the heap so we can select it.
@@ -50,9 +50,9 @@ func (h *LazyQueue) next() Stat {
 	return h.Bandits[0]
 }
 
-func (h *LazyQueue) append(x Stat) { h.Bandits = append(h.Bandits, x) }
+func (h *lazyQueue) append(x Stat) { h.Bandits = append(h.Bandits, x) }
 
-func (h *LazyQueue) up(j int) {
+func (h *lazyQueue) up(j int) {
 	for {
 		i := (j - 1) / 2 // parent
 		if i == j || !h.less(j, i) {
@@ -63,7 +63,7 @@ func (h *LazyQueue) up(j int) {
 	}
 }
 
-func (h *LazyQueue) down(i0 int) bool {
+func (h *lazyQueue) down(i0 int) bool {
 	i := i0
 	n := h.lazyIndex
 	for {
@@ -84,9 +84,9 @@ func (h *LazyQueue) down(i0 int) bool {
 	return i > i0
 }
 
-func (h LazyQueue) Len() int      { return len(h.Bandits) }
-func (h LazyQueue) swap(i, j int) { h.Bandits[i], h.Bandits[j] = h.Bandits[j], h.Bandits[i] }
-func (h LazyQueue) less(i, j int) bool {
+func (h lazyQueue) Len() int      { return len(h.Bandits) }
+func (h lazyQueue) swap(i, j int) { h.Bandits[i], h.Bandits[j] = h.Bandits[j], h.Bandits[i] }
+func (h lazyQueue) less(i, j int) bool {
 	if ui, uj := h.Bandits[i].Priority, h.Bandits[j].Priority; ui != uj {
 		// Higher priority nodes first.
 		return ui > uj

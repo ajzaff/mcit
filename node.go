@@ -13,7 +13,7 @@ type Node struct {
 	Height   int
 	Payload  any
 	Minimize bool
-	LazyQueue
+	lazyQueue
 	// Exhausted marks whether we are done with this node.
 	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
 	// 	* When false, we will generate more simulations (and possibly children) in the future.
