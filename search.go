@@ -82,9 +82,8 @@ func Search(runFn Func, opts ...Option) {
 
 		// 	2e. Backpropagate the results up the tree and fix the bandit heaps along the way.
 		for head := frontier.Parent; head != nil; head = head.Parent {
-			head.Bandits[0].Runs += results.Count
-			head.Bandits[0].Value += results.Value
-			head.Bandits[0].RecomputePriority()
+			head.AddValueRuns(0, results.Value, results.Count)
+			head.RecomputePriority(0)
 			head.down(0)
 		}
 
