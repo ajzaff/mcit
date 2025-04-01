@@ -32,8 +32,3 @@ type NodeSelector struct {
 
 // Func is a search function containing user code which selects a frontier node and returns the results of experiments on it.
 type Func func(selector NodeSelector) (results RunResults)
-
-// Continuation is a structure which contains a root node to pass to continue a previous search from memory.
-type Continuation struct {
-	root *Node
-}

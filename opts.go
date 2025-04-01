@@ -45,6 +45,12 @@ func DoneAfter(d time.Duration) Option {
 	}}
 }
 func MaxIters(n int64) Option { return Option{preFn: func(opts *searchOptions) { opts.maxIters = n }} }
+
+// Continuation is a structure which contains a root node to pass to continue a previous search from memory.
+type Continuation struct {
+	root *Node
+}
+
 func UseContinuation(c *Continuation) Option {
 	return Option{preFn: func(opts *searchOptions) { opts.continuation = c; opts.root = c.root }}
 }
