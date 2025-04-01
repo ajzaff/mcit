@@ -20,36 +20,33 @@ func newSearchOptions() *searchOptions {
 	}
 }
 
-type Option struct {
-	preFn  func(opts *searchOptions)
-	postFn func(opts *searchOptions)
-}
+type Option func(opts *searchOptions)
 
 func Done(done <-chan struct{}) Option {
-	return Option{preFn: func(opts *searchOptions) {
+	return Option(func(opts *searchOptions) {
 		go func() {
 			<-done
 			opts.done = true
 		}()
-	}}
+	})
 }
 func DoneAfter(d time.Duration) Option {
-	return Option{preFn: func(opts *searchOptions) {
+	return Option(func(opts *searchOptions) {
 		go func() {
 			<-time.After(d)
 			opts.done = true
 		}()
-	}}
+	})
 }
-func MaxIters(n int) Option { return Option{preFn: func(opts *searchOptions) { opts.maxIters = n }} }
+func MaxIters(n int) Option { return Option(func(opts *searchOptions) { opts.maxIters = n }) }
 
 // UseContinuation specifies a root node to continue a previous search from memory.
 func UseContinuation(n *Node) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.continuation = n }}
+	return Option(func(opts *searchOptions) { opts.continuation = n })
 }
 func RandSource(src rand.Source) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.src = src }}
+	return Option(func(opts *searchOptions) { opts.src = src })
 }
 func ExpandShuffle(expandShuffle bool) Option {
-	return Option{preFn: func(opts *searchOptions) { opts.expandShuffle = expandShuffle }}
+	return Option(func(opts *searchOptions) { opts.expandShuffle = expandShuffle })
 }

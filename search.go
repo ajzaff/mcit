@@ -18,10 +18,8 @@ func Search(runFn Func, opts ...Option) (result Result) {
 	// 0. Initialize state.
 	searchOpts := newSearchOptions()
 	// 0aa. Execute pre-run hooks and apply options.
-	for _, o := range opts {
-		if o.preFn != nil {
-			o.preFn(searchOpts)
-		}
+	for _, optFn := range opts {
+		optFn(searchOpts)
 	}
 
 	//	0ba. Initialize root.
@@ -30,19 +28,13 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		root = newRoot()
 	}
 
-	//	0c. Schedule post-run hooks.
 	var iters int
 
 	defer func() {
+		// 4. Store search results.
 		result = Result{
 			Root:       root,
 			Iterations: iters,
-		}
-		// 4. Execute post-run hooks.
-		for _, o := range opts {
-			if o.postFn != nil {
-				o.postFn(searchOpts)
-			}
 		}
 	}()
 
