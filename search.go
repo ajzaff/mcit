@@ -8,7 +8,7 @@ import "math/rand/v2"
 // multi-armed bandit policy. Using a regret-optimal combination of exploration and exploitation.
 //
 // It takes options to configure aspects of the search.
-func Search(runFn Func, opts ...Option) {
+func Search(runFn Func, opts ...Option) (root *Node) {
 	// 0. Initialize state.
 	searchOpts := newSearchOptions()
 	// 0aa. Execute pre-run hooks and apply options.
@@ -19,8 +19,7 @@ func Search(runFn Func, opts ...Option) {
 	}
 
 	//	0ba. Initialize root.
-	root := searchOpts.root
-	if root == nil {
+	if root = searchOpts.root; root == nil {
 		searchOpts.root = newRoot()
 		root = searchOpts.root
 	}

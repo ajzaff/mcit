@@ -99,22 +99,6 @@ func MostPopularVariation(r *rand.Rand, stat *Node) Option {
 		*stat = *getSelectLine(opts.root, selectChildFunc(r, compareStatPopularity))
 	}}
 }
-func SearchTreeShallow(stat *Node) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *opts.root.Detatched()
-	}}
-}
-func SearchTree(stat *Node) Option {
-	return Option{postFn: func(opts *searchOptions) {
-		if stat == nil {
-			return
-		}
-		*stat = *opts.root
-	}}
-}
 func Histogram(hist Hist, valueFn func(Stat) float64) Option {
 	return Option{postFn: func(opts *searchOptions) {
 		for e := range statIter(opts.root) {
