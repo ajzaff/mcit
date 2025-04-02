@@ -5,8 +5,6 @@ import (
 	"slices"
 )
 
-const exploreTerm = math.Pi
-
 type Node struct {
 	Parent   *Node
 	Action   string

@@ -31,13 +31,15 @@ func (n Stat) Score() float32 {
 	return n.Value / n.Runs
 }
 
-func (n *Node) RecomputePriority(i int) { n.Bandits[i].Priority = n.Bandits[i].ComputePriority() }
+func (n *Node) RecomputePriority(i int, exploreFactor float32) {
+	n.Bandits[i].Priority = n.Bandits[i].ComputePriority(exploreFactor)
+}
 
-func (n Stat) ComputePriority() float32 {
+func (n Stat) ComputePriority(exploreFactor float32) float32 {
 	if n.Runs == 0 {
 		return float32(math.Inf(+1))
 	}
-	return (n.Value + n.Prior*exploreTerm) / n.Runs
+	return (n.Value + n.Prior*exploreFactor) / n.Runs
 }
 
 func (s *Stat) Reset() {

@@ -1,6 +1,7 @@
 package mcit
 
 import (
+	"math"
 	"math/rand/v2"
 	"time"
 )
@@ -11,12 +12,14 @@ type searchOptions struct {
 	continuation  *Node
 	expandShuffle bool
 	done          bool
+	exploreFactor float32
 }
 
 func newSearchOptions() *searchOptions {
 	return &searchOptions{
 		src:           rand.NewPCG(1337, 0xBEEF),
 		expandShuffle: true,
+		exploreFactor: 2 * math.Pi,
 	}
 }
 
@@ -49,4 +52,7 @@ func RandSource(src rand.Source) Option {
 }
 func ExpandShuffle(expandShuffle bool) Option {
 	return Option(func(opts *searchOptions) { opts.expandShuffle = expandShuffle })
+}
+func ExploreFactor(exploreFactor float32) Option {
+	return Option(func(opts *searchOptions) { opts.exploreFactor = exploreFactor })
 }
