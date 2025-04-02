@@ -11,6 +11,7 @@ type Node struct {
 	Height   int
 	Payload  any
 	Minimize bool
+	Trials   float32
 	lazyQueue
 	// Exhausted marks whether we are done with this node.
 	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
