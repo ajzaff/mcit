@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"math"
+	"iter"
 	"math/rand/v2"
+	"slices"
 
 	"github.com/ajzaff/mcit"
 	"github.com/ajzaff/mcit/internal/fastlog"
 	"github.com/ajzaff/mcit/perft"
+	"github.com/ajzaff/mcit/variation"
 )
 
 const kLo, kHi = -2, 2
@@ -36,11 +38,11 @@ type search struct {
 	k constRange
 }
 
-func (s *search) Reset(actions []string) {
+func (s *search) Reset(actions iter.Seq[string]) {
 	s.k = constRange{kLo, kHi}
 
 	// Apply actions.
-	for _, a := range actions {
+	for a := range actions {
 		switch a {
 		case "lo":
 			s.k = s.k.Lo()
@@ -53,47 +55,32 @@ func (s *search) Reset(actions []string) {
 func main() {
 	r := rand.New(rand.NewPCG(1336, 1338))
 
-	result := mcit.Search(func(sel mcit.NodeSelector) (results mcit.RunResults) {
+	result := mcit.Search(func(c *mcit.Context) {
 		var s search
-		s.Reset(sel.Actions)
+		s.Reset(c.Actions())
 
 		// Calculate suite MSE.
 		k := s.k.Mid()
 		mse := fastlog.CalculateSuiteMSE(1+k, -k)
 
-		results.Count = 1
-		results.Value = -mse // Maximize(-MSE).
-		results.Expand = []string{
-			"lo",
-			"hi",
-		}
+		// Minimize MSE
+		c.Minimize(true)
+		c.SetResultValue(mse)
+		c.Expand("lo", "hi")
+	}, mcit.RandSource(r), mcit.MaxIters(1_000))
 
-		return
-	}, mcit.RandSource(r), mcit.MaxIters(1_000_000))
-
-	var maxNode *mcit.Node
-	maxNMSE := perft.Reduce(result.Root, float32(math.Inf(-1)), func(n *mcit.Node, bestNMSE float32) float32 {
-		var bestAction string
-		for stat := range n.StatSeq() {
-			if nmse := stat.Score(); bestNMSE < nmse {
-				bestNMSE = nmse
-				bestAction = stat.Action
-			}
-		}
-		if bestNode := n.Children[bestAction]; bestNode != nil {
-			maxNode = bestNode
-		}
-		return bestNMSE
+	maxNode := perft.Max(result.Root, func(n *mcit.Node, stat mcit.Stat) float32 {
+		return stat.Score()
 	})
 
 	line := maxNode.Line()
 
-	fmt.Println(maxNMSE)
+	fmt.Println(variation.Stat(maxNode))
 	fmt.Println(line)
 	fmt.Println()
 
 	var s search
-	s.Reset(line)
+	s.Reset(slices.Values(line))
 
 	k := s.k.Mid()
 	mse := fastlog.CalculateSuiteMSE(1+k, -k)

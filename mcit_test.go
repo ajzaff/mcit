@@ -1,31 +1,23 @@
 package mcit
 
 import (
+	"iter"
 	"math/rand/v2"
 	"testing"
 )
 
 func TestSearch(t *testing.T) {
-	results := Search(func(selector NodeSelector) (results RunResults) {
-		if len(selector.Actions) < 10 {
-			results.Expand = []string{
-				"a",
-				"b",
-			}
-			results.Priors = []float32{
-				1,
-				1,
-			}
+	src := rand.NewPCG(1337, 420)
 
-			// Random shuffle.
-			if rand.Int()&1 == 0 {
-				results.Expand[0], results.Expand[1] = results.Expand[1], results.Expand[0]
-			}
+	results := Search(func(c *Context) {
+		if c.Len() < 10 {
+			c.Expand("a", "b")
+			c.Priors(1, 1)
 		}
 
 		// Provide a slight incentive to picking "a" over "b".
 		lambda := 1.0
-		for _, a := range selector.Actions {
+		for a := range c.Actions() {
 			if a == "a" {
 				lambda *= 0.99
 			} else if a == "b" {
@@ -35,17 +27,14 @@ func TestSearch(t *testing.T) {
 
 		const experiments = 100
 
-		value := float32(0)
 		for range experiments {
-			value += float32(rand.ExpFloat64() / lambda)
+			v := float32(rand.ExpFloat64() / lambda)
+			c.AddResultValue(v)
 		}
+	}, MaxIters(100), RandSource(src))
 
-		results.Replace = len(selector.Actions) > 0
-		results.Count = experiments
-		results.Value = value
-
-		return
-	}, MaxIters(100))
+	t.Log("a score", results.Root.Children["a"].Stat().Score())
+	t.Log("b score", results.Root.Children["b"].Stat().Score())
 
 	t.Log(results.Root.Bandits)
 	t.Log(results.Iterations)
@@ -55,10 +44,10 @@ func TestSearch(t *testing.T) {
 func TestSearchFloatRange(t *testing.T) {
 	const maxIters = 10
 
-	x := func(actions []string, loCmd, hiCmd string) float32 {
+	x := func(actions iter.Seq[string], loCmd, hiCmd string) float32 {
 		lo, hi := -100., 100.
 
-		for _, a := range actions {
+		for a := range actions {
 			if a == loCmd {
 				lo += (hi - lo) / 2
 			} else if a == hiCmd {
@@ -81,25 +70,22 @@ func TestSearchFloatRange(t *testing.T) {
 
 	// Attempts to solve the equation: 2a^2 + 2b - 100 = 0.
 	epsilon := float32(0)
-	results := Search(func(selector NodeSelector) (results RunResults) {
-		a := x(selector.Actions, "lo_a", "hi_a")
-		b := x(selector.Actions, "lo_b", "hi_b")
+	results := Search(func(c *Context) {
+		a := x(c.Actions(), "lo_a", "hi_a")
+		b := x(c.Actions(), "lo_b", "hi_b")
 
 		got := objective(a, b)
 
-		results.Value = -loss(got)
-		results.Count = 1
+		c.SetResultValue(-loss(got))
 
 		if loss(got) <= epsilon {
 			bestA = a
 			bestB = b
-			results.Done = true
+			c.Stop()
 			return
 		}
 
-		results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
-
-		return
+		c.Expand("lo_a", "hi_a", "hi_b", "lo_b")
 	}, MaxIters(maxIters))
 
 	t.Log("2a^2 + 2b - 100 = 0")
