@@ -87,7 +87,7 @@ func (s *Node) Detatched() *Node {
 // Stat attempts to locate the stat entry in the parent node.
 // FIXME: Currently, this is not an efficient operation.
 func (s *Node) Stat() *Stat {
-	if s.Parent == nil {
+	if s == nil || s.Parent == nil {
 		return nil
 	}
 	for _, e := range s.Parent.Bandits {
