@@ -7,7 +7,7 @@ import (
 )
 
 func visitNodes(root *mcit.Node, visitFn func(*mcit.Node) bool) {
-	if !visitFn(root) {
+	if root == nil || !visitFn(root) {
 		return
 	}
 	for e := range root.StatSeq() {
