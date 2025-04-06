@@ -60,6 +60,9 @@ func (s *Node) next() Stat {
 			Parent: s,
 			Height: s.Height + 1,
 			Action: stat.Action,
+			// Copy the setting from the parent. Run will have a chance to override this.
+			// See Context.Minimize.
+			Minimize: s.Minimize,
 		}
 		if s.Children == nil {
 			s.Children = map[string]*Node{}
