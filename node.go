@@ -76,8 +76,7 @@ func (s *Node) next() Stat {
 // Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
 // without modifying the original stat object. The tree Height is not reset.
 func (s *Node) Detatched() *Node {
-	var copy Node
-	copy = *s
+	copy := *s
 	copy.Parent = nil
 	copy.Children = nil
 	return &copy

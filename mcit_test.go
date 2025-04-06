@@ -47,13 +47,13 @@ func TestSearch(t *testing.T) {
 		return
 	}, MaxIters(100))
 
-	t.Log(results.Root.lazyQueue.Bandits)
+	t.Log(results.Root.Bandits)
 	t.Log(results.Iterations)
 	t.Log(results.Duration)
 }
 
 func TestSearchFloatRange(t *testing.T) {
-	const maxIters = 1000
+	const maxIters = 10
 
 	x := func(actions []string, loCmd, hiCmd string) float32 {
 		lo, hi := -100., 100.
@@ -100,7 +100,7 @@ func TestSearchFloatRange(t *testing.T) {
 		results.Expand = []string{"lo_a", "hi_a", "hi_b", "lo_b"}
 
 		return
-	}, MaxIters(10))
+	}, MaxIters(maxIters))
 
 	t.Log("2a^2 + 2b - 100 = 0")
 	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))

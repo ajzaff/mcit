@@ -31,4 +31,6 @@ type NodeSelector struct {
 }
 
 // Func is a search function containing user code which selects a frontier node and returns the results of experiments on it.
+//
+// In a future version Func may have a signature like Func(Handler) error.
 type Func func(selector NodeSelector) (results RunResults)

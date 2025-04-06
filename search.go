@@ -66,7 +66,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		results := runFn(NodeSelector{replay, frontier.Payload})
 
 		// 	2b. (optional) Shuffle expanded nodes before inserting them.
-		if searchOpts.expandShuffle {
+		if searchOpts.expandShuffle && len(results.Expand) > 1 {
 			r.Shuffle(len(results.Expand), func(i, j int) { results.Expand[i], results.Expand[j] = results.Expand[j], results.Expand[i] })
 		}
 
