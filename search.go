@@ -50,6 +50,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 	expand := make([]string, 0, 64)
 	priors := make([]float32, 0, 64)
 	maxItersDefined := searchOpts.maxIters > 0
+	exploreFactor := searchOpts.exploreFactor
 
 	for {
 		// 1. Select a frontier node with the maximum bandit at each step. Construct replay actions.
@@ -96,7 +97,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		// 	2e. Backpropagate the results up the tree and fix the bandit heaps along the way.
 		for head := frontier.Parent; head != nil; head = head.Parent {
 			head.AddValueRuns(0, c.value, c.count)
-			head.recomputePriority(0, searchOpts.exploreFactor)
+			head.recomputePriority(0, exploreFactor)
 			head.down(0)
 		}
 
