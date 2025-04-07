@@ -33,8 +33,8 @@ func TestSearch(t *testing.T) {
 		}
 	}, MaxIters(100), RandSource(src))
 
-	t.Log("a score", results.Root.Children["a"].Stat().Score())
-	t.Log("b score", results.Root.Children["b"].Stat().Score())
+	t.Log("a score", extractStat(results.Root, "a").Score())
+	t.Log("b score", extractStat(results.Root, "b").Score())
 
 	t.Log(results.Root.Bandits)
 	t.Log(results.Iterations)
@@ -92,4 +92,29 @@ func TestSearchFloatRange(t *testing.T) {
 	t.Log("a =", bestA, "b =", bestB, "loss =", loss(objective(bestA, bestB)))
 	t.Log(results.Iterations, "iterations")
 	t.Log(results.Duration)
+}
+
+// extractVariation is a test helper that mirrors variation.Variation.
+func extractVariation(root *Node, line ...string) *Node {
+	for _, a := range line {
+		if root == nil {
+			return nil
+		}
+		child := root.Children[a]
+		if child == nil {
+			return nil
+		}
+		root = child
+	}
+	return root
+}
+
+// extractStat is a test helper that mirrors variation.Stat.
+func extractStat(root *Node, line ...string) Stat {
+	n := extractVariation(root, line...)
+	s := n.Stat()
+	if s == nil {
+		return Stat{}
+	}
+	return *s
 }
