@@ -31,25 +31,19 @@ func (h *lazyQueue) StatSeq() iter.Seq[Stat] {
 func (h *lazyQueue) clear(i int) {
 	h.Bandits[i].Clear()
 	h.down(i)
-	h.lazyIndex--
+	if i < h.lazyIndex {
+		h.lazyIndex--
+	}
 }
 
 func (h *lazyQueue) remove(i int) {
-	m := h.lazyIndex - 1
-	h.swap(i, m)
-	h.down(0)
-	// Now swap the element to the end.
-	// We have:  X 1 2 3 ... N
 	n := h.Len() - 1
-	h.swap(m, n)
-	// Now have: N 1 2 3 ... X
+	h.swap(i, n)
+	h.down(i)
 	h.Bandits = h.Bandits[:n]
-	// Now:      N 1 2 3 ...
-	s := h.Bandits[m]
-	copy(h.Bandits[m:], h.Bandits[m+1:])
-	// Now:      1 2 3 ...
-	h.Bandits[n] = s
-	// Finally:  1 2 3 ... N
+	if i < h.lazyIndex {
+		h.lazyIndex--
+	}
 }
 
 func (h lazyQueue) top() Stat { return h.Bandits[0] }
@@ -98,10 +92,6 @@ func (h lazyQueue) down(i0 int) bool {
 func (h lazyQueue) Len() int      { return len(h.Bandits) }
 func (h lazyQueue) swap(i, j int) { h.Bandits[i], h.Bandits[j] = h.Bandits[j], h.Bandits[i] }
 func (h lazyQueue) less(i, j int) bool {
-	if ui, uj := h.Bandits[i].Priority, h.Bandits[j].Priority; ui != uj {
-		// Higher priority nodes first.
-		return ui > uj
-	}
-	// When priorities are equal (often +∞), fall back to prior comparison.
-	return h.Bandits[i].Prior > h.Bandits[j].Prior
+	// Higher priority nodes first.
+	return h.Bandits[i].Priority > h.Bandits[j].Priority
 }
