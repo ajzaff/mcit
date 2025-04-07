@@ -60,6 +60,9 @@ func (s *Node) next() Stat {
 			Parent: s,
 			Height: s.Height + 1,
 			Action: stat.Action,
+			// Copy the setting from the parent. Run will have a chance to override this.
+			// See Context.Minimize.
+			Minimize: s.Minimize,
 		}
 		if s.Children == nil {
 			s.Children = map[string]*Node{}
@@ -75,8 +78,7 @@ func (s *Node) next() Stat {
 // Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
 // without modifying the original stat object. The tree Height is not reset.
 func (s *Node) Detatched() *Node {
-	var copy Node
-	copy = *s
+	copy := *s
 	copy.Parent = nil
 	copy.Children = nil
 	return &copy
@@ -85,7 +87,7 @@ func (s *Node) Detatched() *Node {
 // Stat attempts to locate the stat entry in the parent node.
 // FIXME: Currently, this is not an efficient operation.
 func (s *Node) Stat() *Stat {
-	if s.Parent == nil {
+	if s == nil || s.Parent == nil {
 		return nil
 	}
 	for _, e := range s.Parent.Bandits {

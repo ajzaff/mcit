@@ -86,3 +86,28 @@ func MinVariation(root *mcit.Node, r *rand.Rand) *mcit.Node {
 func MostPopularVariation(root *mcit.Node, r *rand.Rand) *mcit.Node {
 	return getSelectLine(root, selectChildFunc(r, compareStatPopularity))
 }
+
+// Variation returns the node accessed from root by the given line or nil.
+func Variation(root *mcit.Node, line ...string) *mcit.Node {
+	for _, a := range line {
+		if root == nil {
+			return nil
+		}
+		child := root.Children[a]
+		if child == nil {
+			return nil
+		}
+		root = child
+	}
+	return root
+}
+
+// Stat returns the stat accessed from root by the given line or empty.
+func Stat(root *mcit.Node, line ...string) mcit.Stat {
+	n := Variation(root, line...)
+	s := n.Stat()
+	if s == nil {
+		return mcit.Stat{}
+	}
+	return *s
+}

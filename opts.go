@@ -11,6 +11,7 @@ type searchOptions struct {
 	maxIters      int
 	continuation  *Node
 	expandShuffle bool
+	exploreFactor float32
 	done          bool
 	exploreFactor float32
 }

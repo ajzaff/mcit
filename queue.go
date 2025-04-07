@@ -27,6 +27,31 @@ func (h *lazyQueue) StatSeq() iter.Seq[Stat] {
 	}
 }
 
+// clear the statistics on the ith element and demote it to a lazy element.
+func (h *lazyQueue) clear(i int) {
+	h.Bandits[i].Clear()
+	h.down(i)
+	h.lazyIndex--
+}
+
+func (h *lazyQueue) remove(i int) {
+	m := h.lazyIndex - 1
+	h.swap(i, m)
+	h.down(0)
+	// Now swap the element to the end.
+	// We have:  X 1 2 3 ... N
+	n := h.Len() - 1
+	h.swap(m, n)
+	// Now have: N 1 2 3 ... X
+	h.Bandits = h.Bandits[:n]
+	// Now:      N 1 2 3 ...
+	s := h.Bandits[m]
+	copy(h.Bandits[m:], h.Bandits[m+1:])
+	// Now:      1 2 3 ...
+	h.Bandits[n] = s
+	// Finally:  1 2 3 ... N
+}
+
 func (h lazyQueue) top() Stat { return h.Bandits[0] }
 
 func (h *lazyQueue) append(x Stat) { h.Bandits = append(h.Bandits, x) }
