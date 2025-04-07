@@ -13,7 +13,6 @@ type searchOptions struct {
 	expandShuffle bool
 	exploreFactor float32
 	done          bool
-	exploreFactor float32
 }
 
 func newSearchOptions() *searchOptions {
