@@ -3,6 +3,7 @@ package perft
 import (
 	"math"
 
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit"
 )
 
@@ -19,7 +20,7 @@ func Reduce[T int64 | float32 | []int64 | []float32 | Hist[int64] | Hist[float32
 func ReduceStat[T int64 | float32 | []int64 | []float32 | Hist[int64] | Hist[float32]](root *mcit.Node, v0 T, reduceFn func(*mcit.Node, mcit.Stat, T) T) T {
 	v := v0
 	for n := range NodeSeq(root) {
-		for s := range n.StatSeq() {
+		for s := range lazyq.Payloads(n.Queue) {
 			v = reduceFn(n, s, v)
 		}
 	}

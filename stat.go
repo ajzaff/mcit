@@ -3,6 +3,7 @@ package mcit
 import (
 	"math"
 
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit/internal/fastlog"
 )
 
@@ -15,19 +16,6 @@ type Stat struct {
 	Prior    float32
 	Runs     float32
 	Value    float32
-}
-
-// Remove the ith Bandit from the Node.
-func (n *Node) Remove(i int) {
-	n.Trials -= n.Bandits[i].Runs
-	n.remove(i) // Remove the stat while considering lazy elements.
-}
-
-// Clear zeroes the statistics of the ith bandit in the Node
-// and decrements the Node's trial counter.
-func (n *Node) Clear(i int) {
-	n.Trials -= n.Bandits[i].Runs
-	n.clear(i) // Fix the lazy heap index.
 }
 
 // Clear zeroes the statistics from the Stat as if it were never run.
@@ -48,8 +36,10 @@ func (n *Node) AddValueRuns(i int, val, runs float32) {
 		// Negate minimizing nodes (min(a,b) = -max(-a,-b)).
 		val = -val
 	}
-	n.Bandits[i].Value += val
-	n.Bandits[i].Runs += runs
+	e := lazyq.At(n.Queue, i)
+	e.Value += val
+	e.Runs += runs
+	lazyq.ReplacePayload(n.Queue, i, e)
 	n.Trials += runs
 }
 
@@ -74,10 +64,12 @@ func (s Stat) Score() float32 {
 
 // recomputePriority updates the PUCT policy value for the ith bandit with the current statistics.
 //
+// Maintains the queue's heap property.
+//
 // recomputePriority should only be called when runs > 0, otherwise it returns NaN.
 func (n *Node) recomputePriority(i int, exploreFactor float32) {
-	bandit := n.Bandits[i]
-	n.Bandits[i].Priority = computePriority(bandit.Value, bandit.Prior, bandit.Runs, n.Trials, exploreFactor)
+	bandit := lazyq.At(n.Queue, i)
+	n.Queue.Decrease(computePriority(bandit.Value, bandit.Prior, bandit.Runs, n.Trials, exploreFactor))
 }
 
 // computePriority computes the PUCT formula on the inputs.

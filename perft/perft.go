@@ -2,6 +2,7 @@
 package perft
 
 import (
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit"
 )
 
@@ -30,7 +31,7 @@ func DetailedSearchStats(root *mcit.Node) SearchStats {
 		if results.MaxHeight < int64(n.Height) {
 			results.MaxHeight = int64(n.Height)
 		}
-		for stat := range n.StatSeq() {
+		for stat := range lazyq.Payloads(n.Queue) {
 			// MaxHeightRun
 			if stat.Runs > 0 && results.MaxHeightRun < int64(n.Height) {
 				results.MaxHeightRun = int64(n.Height)

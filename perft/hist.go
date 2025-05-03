@@ -4,6 +4,7 @@ import (
 	"math"
 	"slices"
 
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit"
 )
 
@@ -42,7 +43,7 @@ func MakeHist[T int64 | float32](bins []T) Hist[T] {
 
 func Fill[T int64 | float32](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
 	for n := range NodeSeq(root) {
-		for e := range n.StatSeq() {
+		for e := range lazyq.Payloads(n.Queue) {
 			x := valueFn(e)
 			hist.Insert(x)
 		}

@@ -3,6 +3,8 @@ package mcit
 import (
 	"math"
 	"slices"
+
+	"github.com/ajzaff/lazyq"
 )
 
 type Node struct {
@@ -12,7 +14,7 @@ type Node struct {
 	Payload  any
 	Minimize bool
 	Trials   float32
-	lazyQueue
+	Queue    lazyq.Queue[Stat]
 	// Exhausted marks whether we are done with this node.
 	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
 	// 	* When false, we will generate more simulations (and possibly children) in the future.
@@ -36,14 +38,14 @@ func (parent *Node) NewChild(action string, prior float32) (created bool) {
 	//       This saves allocations for nodes that are never explored.
 	parent.Children[action] = nil
 	stat := Stat{Action: action, Prior: prior, Priority: float32(math.Inf(+1))}
-	// NOTE: We don't use heap.Push here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
-	//       LazyHeap keeps track of the first index of frontier nodes.
-	parent.append(stat)
+	// NOTE: We don't use heapify here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
+	//       lazyq keeps track of the first index of frontier nodes.
+	parent.Queue.AppendMax(stat)
 	return true
 }
 
 func (s *Node) next() Stat {
-	if s.hasLazyElements() {
+	if lazyq.HasMaxElems(s.Queue) {
 		// We have at least one node which has never been tried before.
 		// Use this time to fix the position in the heap so we can select it.
 		// Nodes which have never been tried before always take priority.
@@ -55,7 +57,7 @@ func (s *Node) next() Stat {
 		// Create the new child now.
 		// By defering child creation until the last minute
 		// we save tons of allocations for nodes which are never explored.
-		stat := s.Bandits[s.lazyIndex]
+		stat := lazyq.FirstMaxElem(s.Queue)
 		child := &Node{
 			Parent: s,
 			Height: s.Height + 1,
@@ -68,11 +70,10 @@ func (s *Node) next() Stat {
 			s.Children = map[string]*Node{}
 		}
 		s.Children[stat.Action] = child
-		s.upLazy()
 	}
 	// NOTE: We always take the first action.
 	// If we ever implemented a temperature feature, we'd need to keep track of this index.
-	return s.top()
+	return s.Queue.Next()
 }
 
 // Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
@@ -90,7 +91,7 @@ func (s *Node) Stat() *Stat {
 	if s == nil || s.Parent == nil {
 		return nil
 	}
-	for _, e := range s.Parent.Bandits {
+	for e := range lazyq.Payloads(s.Parent.Queue) {
 		if e.Action == s.Action {
 			return &e
 		}

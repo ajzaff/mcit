@@ -56,7 +56,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		// 1. Select a frontier node with the maximum bandit at each step. Construct replay actions.
 		frontier := root
 		replay = replay[:0]
-		for frontier.Exhausted && len(frontier.Bandits) > 0 {
+		for frontier.Exhausted && frontier.Queue.Len() > 0 {
 			action := frontier.next().Action
 			next := frontier.Children[action]
 			if next == nil {
@@ -98,7 +98,6 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		for head := frontier.Parent; head != nil; head = head.Parent {
 			head.AddValueRuns(0, c.value, c.count)
 			head.recomputePriority(0, exploreFactor)
-			head.down(0)
 		}
 
 		// 	3. State keeping and termination.

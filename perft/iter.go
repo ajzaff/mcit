@@ -3,6 +3,7 @@ package perft
 import (
 	"iter"
 
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit"
 )
 
@@ -10,7 +11,7 @@ func visitNodes(root *mcit.Node, visitFn func(*mcit.Node) bool) {
 	if root == nil || !visitFn(root) {
 		return
 	}
-	for e := range root.StatSeq() {
+	for e := range lazyq.Payloads(root.Queue) {
 		visitNodes(root.Children[e.Action], visitFn)
 	}
 }

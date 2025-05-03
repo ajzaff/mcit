@@ -36,7 +36,7 @@ func TestSearch(t *testing.T) {
 	t.Log("a score", extractStat(results.Root, "a").Score())
 	t.Log("b score", extractStat(results.Root, "b").Score())
 
-	t.Log(results.Root.Bandits)
+	t.Log(results.Root.Queue)
 	t.Log(results.Iterations)
 	t.Log(results.Duration)
 }

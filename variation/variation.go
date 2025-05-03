@@ -3,6 +3,7 @@ package variation
 import (
 	"math/rand/v2"
 
+	"github.com/ajzaff/lazyq"
 	"github.com/ajzaff/mcit"
 )
 
@@ -22,7 +23,7 @@ func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcit.Stat) int) func(*mcit.No
 		// Create an equivalence slice for implementing fair random choice
 		// To tie break between equivalent children according to cmpFn.
 		equal := []mcit.Stat{{}}
-		for _, b := range root.Bandits {
+		for b := range lazyq.Payloads(root.Queue) {
 			a := equal[0]
 			switch c := cmpFn(a, b); {
 			case c > 0:
