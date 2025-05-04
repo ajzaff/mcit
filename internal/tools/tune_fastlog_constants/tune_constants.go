@@ -6,8 +6,9 @@ import (
 	"math/rand/v2"
 	"slices"
 
+	"github.com/ajzaff/fastlog"
+	"github.com/ajzaff/fastlog/suite"
 	"github.com/ajzaff/mcit"
-	"github.com/ajzaff/mcit/internal/fastlog"
 	"github.com/ajzaff/mcit/perft"
 	"github.com/ajzaff/mcit/variation"
 )
@@ -61,7 +62,7 @@ func main() {
 
 		// Calculate suite MSE.
 		k := s.k.Mid()
-		mse := fastlog.CalculateSuiteMSE(1+k, -k)
+		mse := suite.CalculateLog2MSE(1+k, -k)
 
 		// Minimize MSE
 		c.Minimize(true)
@@ -83,7 +84,7 @@ func main() {
 	s.Reset(slices.Values(line))
 
 	k := s.k.Mid()
-	mse := fastlog.CalculateSuiteMSE(1+k, -k)
+	mse := suite.CalculateLog2MSE(1+k, -k)
 	stats := perft.DetailedSearchStats(result.Root)
 
 	fmt.Println("k:              ", k)
@@ -96,7 +97,7 @@ func main() {
 	fmt.Println("max_height:     ", stats.MaxHeight)
 	fmt.Println("max_height_run: ", stats.MaxHeightRun)
 
-	bestMSE := fastlog.CalculateSuiteMSE(1+fastlog.K, -fastlog.K)
+	bestMSE := suite.CalculateLog2MSE(1+fastlog.K, -fastlog.K)
 	if mse < bestMSE {
 		fmt.Println()
 		fmt.Println("New c0, c1 MSE beats the best known k !!")

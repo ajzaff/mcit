@@ -3,8 +3,8 @@ package mcit
 import (
 	"math"
 
+	"github.com/ajzaff/fastlog"
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit/internal/fastlog"
 )
 
 // Stat defines a structure for statistics used in the multi-armed bandit process.

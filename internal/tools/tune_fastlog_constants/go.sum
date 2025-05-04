@@ -1,0 +1,8 @@
+github.com/ajzaff/fastlog v0.0.0-20250504190333-d075f4ac3ea5 h1:2YH0FbZr6Ex30FNJhjGuzZW3anteOh7MKKIuByL0mbo=
+github.com/ajzaff/fastlog v0.0.0-20250504190333-d075f4ac3ea5/go.mod h1:VyW31wlil/4rS3SbKaOedQ7S4802RVoX6VTa+W+HiqU=
+github.com/ajzaff/fastlog/suite v0.0.0-20250504190535-7ae1b28d450a h1:1UDqtPWxZZUdBSzt2hnE/hNUKOKKyWUhFKOzAlXUWzQ=
+github.com/ajzaff/fastlog/suite v0.0.0-20250504190535-7ae1b28d450a/go.mod h1:AUXpuDETB0APw8GxyhSpe18+NxdoE8hGvGxFfrhugm4=
+github.com/ajzaff/lazyq v0.1.0 h1:KT/8qNGjCN4rj8gR5zLTxWZrNfcK0RPd2BBKIihm/DY=
+github.com/ajzaff/lazyq v0.1.0/go.mod h1:nYnqtCigj9W3VtwDtLOBMAqAqjf8ASRwUJvlMORjsPM=
+github.com/ajzaff/mcit v0.0.0-20250504191907-0a8ed0b397e2 h1:izVTzot+dizorOmGlpld/BuZ5grS8gaS7MxXG/fMz4g=
+github.com/ajzaff/mcit v0.0.0-20250504191907-0a8ed0b397e2/go.mod h1:5UUaWdshsj8PT9jzIPupAr7wwslTAEbYx7+n6G6acGo=
