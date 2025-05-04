@@ -8,18 +8,18 @@ import (
 )
 
 type Node struct {
-	Parent   *Node
-	Action   string
-	Height   int
-	Payload  any
-	Minimize bool
-	Trials   float32
-	Queue    lazyq.Queue[Stat]
+	Parent    *Node
+	Action    string
+	Height    int
+	Payload   any
+	Minimize  bool
+	Exhausted bool
+	Trials    float32
+	Queue     lazyq.Queue[Stat]
 	// Exhausted marks whether we are done with this node.
 	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
 	// 	* When false, we will generate more simulations (and possibly children) in the future.
-	Exhausted bool
-	Children  map[string]*Node
+	Children map[string]*Node
 }
 
 func newRoot() *Node { return &Node{} }
