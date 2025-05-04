@@ -27,19 +27,21 @@ func (s *Stat) Clear() {
 	s.Value = 0
 }
 
-// AddValueRuns adds val and runs to the ith bandit statistics
-// and the nodes Trials counter.
+// addValueRuns adds val and runs to the top bandit Stat
+// and updates the node's Trials counter.
 //
-// AddValueRuns correctly handles the node's Minimize flag.
-func (n *Node) AddValueRuns(i int, val, runs float32) {
+// addValueRuns correctly handles the node's Minimize flag.
+//
+// We expect to call recomputePriority afterwards.
+func (n *Node) addValueRuns(val, runs float32) {
 	if n.Minimize {
 		// Negate minimizing nodes (min(a,b) = -max(-a,-b)).
 		val = -val
 	}
-	e := lazyq.At(n.Queue, i)
+	e := lazyq.First(n.Queue)
 	e.Value += val
 	e.Runs += runs
-	lazyq.ReplacePayload(n.Queue, i, e)
+	lazyq.ReplacePayload(n.Queue, 0, e)
 	n.Trials += runs
 }
 
@@ -67,8 +69,8 @@ func (s Stat) Score() float32 {
 // Maintains the queue's heap property.
 //
 // recomputePriority should only be called when runs > 0, otherwise it returns NaN.
-func (n *Node) recomputePriority(i int, exploreFactor float32) {
-	bandit := lazyq.At(n.Queue, i)
+func (n *Node) recomputePriority(exploreFactor float32) {
+	bandit := lazyq.First(n.Queue)
 	n.Queue.Decrease(computePriority(bandit.Value, bandit.Prior, bandit.Runs, n.Trials, exploreFactor))
 }
 
