@@ -73,7 +73,7 @@ func main() {
 		return stat.Score()
 	})
 
-	line := maxNode.Line()
+	line := variation.Line(maxNode)
 
 	fmt.Println(variation.Stat(maxNode))
 	fmt.Println(line)

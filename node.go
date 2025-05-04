@@ -2,7 +2,6 @@ package mcit
 
 import (
 	"math"
-	"slices"
 
 	"github.com/ajzaff/lazyq"
 )
@@ -97,16 +96,4 @@ func (s *Node) Stat() *Stat {
 		}
 	}
 	return nil
-}
-
-func (s *Node) Line() []string { return s.AppendLine(nil) }
-
-func (s *Node) AppendLine(buf []string) []string {
-	i := len(buf)
-	buf = slices.Grow(buf[i:], 1+s.Height)
-	for ; s.Parent != nil; s = s.Parent {
-		buf = append(buf, s.Action)
-	}
-	slices.Reverse(buf[i:])
-	return buf
 }
