@@ -65,7 +65,7 @@ func main() {
 		mse := suite.CalculateLog2MSE(1+k, -k)
 
 		// Minimize MSE
-		c.Minimize(true)
+		c.Minimize()
 		c.SetResultValue(mse)
 		c.Expand("lo", "hi")
 	}, mcit.RandSource(r), mcit.MaxIters(1_000))
@@ -87,15 +87,15 @@ func main() {
 	mse := suite.CalculateLog2MSE(1+k, -k)
 	stats := perft.DetailedSearchStats(result.Root)
 
-	fmt.Println("k:              ", k)
-	fmt.Println("c0, c1:         ", 1+k, -k)
-	fmt.Println("suiteMSE:       ", mse)
-	fmt.Println("iterations:     ", result.Iterations)
-	fmt.Println("duration:       ", result.Duration)
-	fmt.Println("node_count:     ", stats.NodeCount)
-	fmt.Println("leaf_count:     ", stats.LeafCount)
-	fmt.Println("max_height:     ", stats.MaxHeight)
-	fmt.Println("max_height_run: ", stats.MaxHeightRun)
+	fmt.Println("k:           ", k)
+	fmt.Println("c0, c1:      ", 1+k, -k)
+	fmt.Println("suiteMSE:    ", mse)
+	fmt.Println("iterations:  ", result.Iterations)
+	fmt.Println("duration:    ", result.Duration)
+	fmt.Println("node_count:  ", stats.NodeCount)
+	fmt.Println("leaf_count:  ", stats.LeafCount)
+	fmt.Println("height:      ", stats.Height)
+	fmt.Println("deepest_run: ", stats.DeepestRun)
 
 	bestMSE := suite.CalculateLog2MSE(1+fastlog.K, -fastlog.K)
 	if mse < bestMSE {
