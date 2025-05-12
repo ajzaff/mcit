@@ -50,13 +50,11 @@ func (parent *Node) NewChild(action string, exploreFactor float32) (created bool
 	if _, found := parent.indexChild(action); found {
 		return false
 	}
-
 	// NOTE: We defer child creation until node is actually opened.
 	//       This saves allocations for nodes that are never explored.
-	stat := Stat{ExploreFactor: exploreFactor}
 	// NOTE: We don't use heapify here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
 	//       lazyq keeps track of the first index of frontier nodes.
-	parent.Queue.AppendMax(Child{Action: action, Stat: stat})
+	parent.Queue.AppendMax(Child{Action: action, Stat: Stat{ExploreFactor: exploreFactor}})
 	return true
 }
 
