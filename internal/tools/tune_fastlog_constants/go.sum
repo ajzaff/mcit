@@ -4,3 +4,5 @@ github.com/ajzaff/fastlog/suite v0.0.0-20250504190535-7ae1b28d450a h1:1UDqtPWxZZ
 github.com/ajzaff/fastlog/suite v0.0.0-20250504190535-7ae1b28d450a/go.mod h1:AUXpuDETB0APw8GxyhSpe18+NxdoE8hGvGxFfrhugm4=
 github.com/ajzaff/lazyq v0.2.0 h1:dwGHkN0+yvDKEnsPFokuX9Bw6rrQ0lzE0nZkG4H6xq0=
 github.com/ajzaff/lazyq v0.2.0/go.mod h1:nYnqtCigj9W3VtwDtLOBMAqAqjf8ASRwUJvlMORjsPM=
+github.com/ajzaff/mcts v0.0.0-20250512213343-b7e9359b5c47 h1:FS2XPY8R2oXW+Dh6ha/JC7y/OoRg8CgP+c0ZcWq+3yk=
+github.com/ajzaff/mcts v0.0.0-20250512213343-b7e9359b5c47/go.mod h1:2uUzLrSF7fLC27wHGxd/xO7f2NFPE+KMhMhU+OMp4VM=

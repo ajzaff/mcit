@@ -8,9 +8,9 @@ import (
 
 	"github.com/ajzaff/fastlog"
 	"github.com/ajzaff/fastlog/suite"
-	mcts "github.com/ajzaff/mcit"
-	"github.com/ajzaff/mcit/perft"
-	"github.com/ajzaff/mcit/variation"
+	"github.com/ajzaff/mcts"
+	"github.com/ajzaff/mcts/perft"
+	"github.com/ajzaff/mcts/variation"
 )
 
 const kLo, kHi = -2, 2
