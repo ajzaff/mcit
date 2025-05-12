@@ -4,6 +4,8 @@ import (
 	"iter"
 	"math/rand/v2"
 	"testing"
+
+	"github.com/ajzaff/lazyq"
 )
 
 func TestSearch(t *testing.T) {
@@ -100,11 +102,15 @@ func extractVariation(root *Node, line ...string) *Node {
 		if root == nil {
 			return nil
 		}
-		child := root.Children[a]
-		if child == nil {
+		idx, ok := root.indexChild(a)
+		if !ok {
 			return nil
 		}
-		root = child
+		s := lazyq.At(root.Queue, idx)
+		if s.Node == nil {
+			return nil
+		}
+		root = s.Node
 	}
 	return root
 }
@@ -116,5 +122,5 @@ func extractStat(root *Node, line ...string) Stat {
 	if s == nil {
 		return Stat{}
 	}
-	return *s
+	return s.Stat
 }

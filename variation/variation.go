@@ -8,7 +8,7 @@ import (
 )
 
 func getSelectLine(root *mcit.Node, selectFn func(*mcit.Node) *mcit.Node) *mcit.Node {
-	for len(root.Children) > 0 {
+	for root.Queue.Len() > 0 {
 		next := selectFn(root)
 		if next == nil {
 			break
@@ -22,10 +22,10 @@ func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcit.Stat) int) func(*mcit.No
 	return func(root *mcit.Node) *mcit.Node {
 		// Create an equivalence slice for implementing fair random choice
 		// To tie break between equivalent children according to cmpFn.
-		equal := []mcit.Stat{{}}
+		equal := []mcit.Child{{}}
 		for b := range lazyq.Payloads(root.Queue) {
 			a := equal[0]
-			switch c := cmpFn(a, b); {
+			switch c := cmpFn(a.Stat, b.Stat); {
 			case c > 0:
 				// Swap out for a better node, and reset the equivalence slice.
 				equal[0] = b
@@ -41,7 +41,8 @@ func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcit.Stat) int) func(*mcit.No
 			equal[0], equal[i] = equal[i], equal[0]
 		}
 		// When nil, no action was selected.
-		return root.Children[equal[0].Action]
+		e, _ := LookupElem(root, equal[0].Action)
+		return e.E.Node
 	}
 }
 
@@ -94,11 +95,11 @@ func Variation(root *mcit.Node, line ...string) *mcit.Node {
 		if root == nil {
 			return nil
 		}
-		child := root.Children[a]
-		if child == nil {
+		e, ok := LookupElem(root, a)
+		if !ok {
 			return nil
 		}
-		root = child
+		root = e.E.Node
 	}
 	return root
 }
@@ -110,5 +111,5 @@ func Stat(root *mcit.Node, line ...string) mcit.Stat {
 	if s == nil {
 		return mcit.Stat{}
 	}
-	return *s
+	return s.Stat
 }

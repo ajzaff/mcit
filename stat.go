@@ -11,18 +11,15 @@ import (
 //
 // Stat is embedded inside a Node.
 type Stat struct {
-	Action   string
-	Priority float32
-	Prior    float32
-	Runs     float32
-	Value    float32
+	ExploreFactor float32
+	Runs          float32
+	Value         float32
 }
 
 // Clear zeroes the statistics from the Stat as if it were never run.
 //
 // It does not clear Action or Prior values.
 func (s *Stat) Clear() {
-	s.Priority = float32(math.Inf(+1))
 	s.Runs = 0
 	s.Value = 0
 }
@@ -34,7 +31,7 @@ func (s *Stat) Clear() {
 //
 // We expect to call recomputePriority afterwards.
 func (n *Node) addValueRuns(val, runs float32) {
-	if n.Minimize {
+	if n.Minimize() {
 		// Negate minimizing nodes (min(a,b) = -max(-a,-b)).
 		val = -val
 	}
@@ -48,7 +45,7 @@ func (n *Node) addValueRuns(val, runs float32) {
 // Score the stat on the node taking into account the Minimize flag.
 func (n *Node) Score(stat Stat) float32 {
 	v := stat.Score()
-	if n.Minimize {
+	if n.Minimize() {
 		return -v
 	}
 	return v
@@ -64,23 +61,15 @@ func (s Stat) Score() float32 {
 	return s.Value / s.Runs
 }
 
-// recomputePriority updates the PUCT policy value for the ith bandit with the current statistics.
+// logTrials returns an approximation of Log(Trials) for n.
 //
-// Maintains the queue's heap property.
-//
-// recomputePriority should only be called when runs > 0, otherwise it returns NaN.
-func (n *Node) recomputePriority(exploreFactor float32) {
-	bandit := lazyq.First(n.Queue)
-	n.Queue.Decrease(computePriority(bandit.Value, bandit.Prior, bandit.Runs, n.Trials, exploreFactor))
-}
+// logTrials behavior is undefined when return n.Trials <= 0.
+func (n *Node) logTrials() float32 { return fastlog.Log(n.Trials + 1) }
 
 // computePriority computes the PUCT formula on the inputs.
-func computePriority(value, prior, runs, trials, exploreFactor float32) float32 {
-	runFactor := runs + 1
-	runFactor = 1 / runFactor
-	exploit := value * runFactor
-	explore := fastlog.Log(trials) * runFactor
-	explore = float32(math.Sqrt(float64(explore)))
-	explore *= prior * exploreFactor
+func (s Stat) computePriority(logTrials float32) float32 {
+	runFactor := 1 / (s.Runs + 1)
+	exploit := s.Value * runFactor
+	explore := s.ExploreFactor * float32(math.Sqrt(float64(logTrials*runFactor)))
 	return exploit + explore
 }

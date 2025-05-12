@@ -23,19 +23,19 @@ type Context struct {
 	// preserve can be set to true when the node should be returned to the frontier queue.
 	// This is useful when allowing nodes to be partially expanded on each new visit OR
 	// when the node is a leaf node of the current search and we want to repeatedly explore it.
-	preserve bool
-	minimize bool
-
-	// Payload contains optional user generated payload to store in the resulting tree Node.
-	// This can be a reference to the user land state of the node which can be more convenient
-	// when direct replay is difficult.
-	payload any
+	flags Flags
 
 	count float32
 	value float32
 
 	done bool
 	err  error
+}
+
+func (c *Context) reset() {
+	c.actions = c.actions[:0]
+	c.expand = c.expand[:0]
+	c.priors = c.priors[:0]
 }
 
 func (c *Context) Len() int { return len(c.actions) }
@@ -45,12 +45,6 @@ func (c *Context) Stop() { c.StopErr(ErrStop) }
 
 // StopErr stops the search immediately with the given error.
 func (c *Context) StopErr(err error) { c.done = true; c.err = err }
-
-// Payload returns the current payload.
-func (c *Context) Payload() any { return c.payload }
-
-// ReplacePayload replaces the payload on the current node.
-func (c *Context) ReplacePayload(v any) { c.payload = v }
 
 // Actions returns an iterator of actions from root up to the current node.
 //
@@ -69,26 +63,31 @@ func (c *Context) ActionAt(i int) string {
 	return c.actions[i]
 }
 
+// Append is like [Expand] but does not exhaust the node.
+func (c *Context) Append(actions ...string) { c.expand = append(c.expand, actions...) }
+
+func (c *Context) exhaust() { c.flags |= FlagsExhausted }
+
 // Expand adds the given actions to the expand set from the current node.
-func (c *Context) Expand(actions ...string) { c.expand = append(c.expand, actions...) }
+//
+// Exhausts the node. An exhausted node cannot expand again in the future,
+// but still receives priority updates via backpropoagaion.
+func (c *Context) Expand(actions ...string) { c.Append(actions...); c.exhaust() }
 
 // Priors optionally adds the given unnormalized priors to the expand set from the current node.
 //
 // If Priors are used, they must be called one-to-one with Expand.
 func (c *Context) Priors(priors ...float32) { c.priors = append(c.priors, priors...) }
 
-// Preserve may be called to keep the node from being marked "exhausted".
+// Minimize sets the objective function of the current node and its subtree to minimize.
 //
-// This will allow further simulations to be continued from this node as well as new nodes to be expanded.
-// The default behavior is to automatically exhaust nodes which have been called once.
-func (c *Context) Preserve() { c.preserve = true }
+// The default is maximize.
+func (c *Context) Minimize() { c.flags |= FlagsMinimize }
 
-// Minimize sets the objective function of the current node and its subtree.
+// Maximize sets the objective function of the current node and its subtree to maximize.
 //
-// By default the objective function is "maximize". The objective function is
-// inherited from parents to children, but Maximize may be used to set it
-// explicitly, for instance, in two player game contexts.
-func (c *Context) Minimize(minimize bool) { c.minimize = minimize }
+// This is the default.
+func (c *Context) Maximize() { c.flags &= ^FlagsMinimize }
 
 // SetResult sets the result of the experiment to the explicit value and number of experiments.
 func (c *Context) SetResult(value, count float32) { c.value = value; c.count = count }

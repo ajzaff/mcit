@@ -10,31 +10,31 @@ type SearchStats struct {
 	NodeCount      int64
 	LeafCount      int64
 	ExhaustedCount int64
-	MaxHeight      int64
-	MaxHeightRun   int64
+	Height         int64
+	DeepestRun     int64
 }
 
 func DetailedSearchStats(root *mcit.Node) SearchStats {
 	var results SearchStats
-	visitNodes(root, func(n *mcit.Node) bool {
+	visitNodes(root, 0, func(n *mcit.Node, depth int) bool {
 		// NodeCount
 		results.NodeCount++
 		// LeafCount
-		if len(n.Children) == 0 {
+		if n.Queue.Len() == 0 {
 			results.LeafCount++
 		}
 		// ExhaustedCount
-		if n.Exhausted {
+		if n.Exhausted() {
 			results.ExhaustedCount++
 		}
 		// MaxHeight
-		if results.MaxHeight < int64(n.Height) {
-			results.MaxHeight = int64(n.Height)
+		if results.Height < int64(depth) {
+			results.Height = int64(depth)
 		}
 		for stat := range lazyq.Payloads(n.Queue) {
 			// MaxHeightRun
-			if stat.Runs > 0 && results.MaxHeightRun < int64(n.Height) {
-				results.MaxHeightRun = int64(n.Height)
+			if stat.Runs > 0 && results.DeepestRun < int64(depth) {
+				results.DeepestRun = int64(depth)
 			}
 		}
 		return true

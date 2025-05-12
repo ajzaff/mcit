@@ -3,6 +3,8 @@ package mcit
 import (
 	"math/rand/v2"
 	"time"
+
+	"github.com/ajzaff/lazyq"
 )
 
 // Result of a search containing the root search node and total number of iterations of MCTS performed.
@@ -36,68 +38,61 @@ func Search(runFn Func, opts ...Option) (result Result) {
 	var iters int
 	start := time.Now()
 
-	defer func() {
-		// 4. Store search results.
-		result = Result{
-			Root:       root,
-			Iterations: iters,
-			Duration:   time.Since(start),
-		}
-	}()
-
 	r := rand.New(searchOpts.src)
-	replay := make([]string, 0, 64)
-	expand := make([]string, 0, 64)
-	priors := make([]float32, 0, 64)
 	maxItersDefined := searchOpts.maxIters > 0
 	exploreFactor := searchOpts.exploreFactor
+
+	c := &Context{
+		actions: make([]string, 0, 64),
+		expand:  make([]string, 0, 64),
+		priors:  make([]float32, 0, 64),
+	}
 
 	for {
 		// 1. Select a frontier node with the maximum bandit at each step. Construct replay actions.
 		frontier := root
-		replay = replay[:0]
-		for frontier.Exhausted && frontier.Queue.Len() > 0 {
-			action := frontier.next().Action
-			next := frontier.Children[action]
-			if next == nil {
-				break
+		c.reset()
+		for frontier.Exhausted() && frontier.Queue.Len() > 0 {
+			next := frontier.next()
+			if next.Node == nil {
+				break // Search from here.
 			}
-			replay = append(replay, action)
-			frontier = next
+			c.actions = append(c.actions, next.Action)
+			frontier = next.Node
 		}
 
 		// 2. Run simulations at the frontier node.
-		c := Context{actions: replay, expand: expand[:0], priors: priors[:0]}
-		runFn(&c)
-		frontier.Minimize = c.minimize
-		expand = c.expand
-		priors = c.priors
+		runFn(c)
+		frontier.Flags &= ^FlagsMinimize
+		frontier.Flags |= c.flags & FlagsMinimize
 
 		// 	2b. (optional) Shuffle expanded nodes before inserting them.
-		if searchOpts.expandShuffle && len(expand) > 1 {
-			r.Shuffle(len(expand), func(i, j int) { expand[i], expand[j] = expand[j], expand[i] })
+		if searchOpts.expandShuffle && len(c.expand) > 1 {
+			r.Shuffle(len(c.expand), func(i, j int) { c.expand[i], c.expand[j] = c.expand[j], c.expand[i] })
 		}
 
 		// 	2c. (optional) Expand the node, and add children to the state.
-		for i, action := range expand {
+		for i, action := range c.expand {
 			//	2ca. (optional) Priors, if provided, should match the slice of expanded nodes.
 			// FIXME: Implement prior normalization and renormalizaion.
-			prior := float32(1)
+			prior := float32(exploreFactor)
 			if len(c.priors) > 0 {
-				prior = c.priors[i]
+				prior *= c.priors[i]
 			}
 			frontier.NewChild(action, prior)
 		}
 
 		// 	2d. (optional) Keep the frontier node in the frontier set.
-		if !c.preserve {
-			frontier.Exhausted = true
+		if c.flags.Exhausted() {
+			frontier.Flags |= FlagsExhausted
 		}
 
 		// 	2e. Backpropagate the results up the tree and fix the bandit heaps along the way.
 		for head := frontier.Parent; head != nil; head = head.Parent {
 			head.addValueRuns(c.value, c.count)
-			head.recomputePriority(exploreFactor)
+			// Recompute the PUCT policy value for the frontier.
+			bandit := lazyq.First(head.Queue)
+			head.Queue.Decrease(bandit.computePriority(head.logTrials()))
 		}
 
 		// 	3. State keeping and termination.
@@ -105,14 +100,21 @@ func Search(runFn Func, opts ...Option) (result Result) {
 
 		if searchOpts.done || c.done { //	3b. (optional) Stop search if done.
 			result.Err = c.err
-			return
+			break
 		}
 
 		//	3c. End the search when maxIters is reached.
 		if maxItersDefined && iters >= searchOpts.maxIters {
-			return
+			break
 		}
 
 		// 4. Restart from step 1.
+	}
+
+	// 5. Store search results.
+	return Result{
+		Root:       root,
+		Iterations: iters,
+		Duration:   time.Since(start),
 	}
 }

@@ -16,8 +16,8 @@ func Reduce[T int64 | float32 | []int64 | []float32 | Hist[int64] | Hist[float32
 	return v
 }
 
-// Reduce a series of measures in bulk on Nodes.
-func ReduceStat[T int64 | float32 | []int64 | []float32 | Hist[int64] | Hist[float32]](root *mcit.Node, v0 T, reduceFn func(*mcit.Node, mcit.Stat, T) T) T {
+// ReduceChild reduces a series of node children.
+func ReduceChild[T int64 | float32 | []int64 | []float32 | Hist[int64] | Hist[float32]](root *mcit.Node, v0 T, reduceFn func(*mcit.Node, mcit.Child, T) T) T {
 	v := v0
 	for n := range NodeSeq(root) {
 		for s := range lazyq.Payloads(n.Queue) {
@@ -32,10 +32,10 @@ func Min(root *mcit.Node, valueFn func(*mcit.Node, mcit.Stat) float32) *mcit.Nod
 		v0      = float32(math.Inf(+1))
 		minNode *mcit.Node
 	)
-	ReduceStat(root, v0, func(n *mcit.Node, s mcit.Stat, minValue float32) float32 {
-		v := valueFn(n, s)
+	ReduceChild(root, v0, func(n *mcit.Node, c mcit.Child, minValue float32) float32 {
+		v := valueFn(n, c.Stat)
 		if v < minValue {
-			minNode = n.Children[s.Action]
+			minNode = n
 			return v
 		}
 		return minValue
@@ -48,10 +48,10 @@ func Max(root *mcit.Node, valueFn func(*mcit.Node, mcit.Stat) float32) *mcit.Nod
 		v0      = float32(math.Inf(-1))
 		maxNode *mcit.Node
 	)
-	ReduceStat(root, v0, func(n *mcit.Node, s mcit.Stat, maxValue float32) float32 {
-		v := valueFn(n, s)
+	ReduceChild(root, v0, func(n *mcit.Node, c mcit.Child, maxValue float32) float32 {
+		v := valueFn(n, c.Stat)
 		if maxValue < v {
-			maxNode = n.Children[s.Action]
+			maxNode = n
 			return v
 		}
 		return maxValue

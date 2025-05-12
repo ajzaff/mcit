@@ -1,6 +1,10 @@
 package mcit
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ajzaff/lazyq"
+)
 
 func TestJustInTimeNodeAllocation(t *testing.T) {
 	var n Node
@@ -9,17 +13,18 @@ func TestJustInTimeNodeAllocation(t *testing.T) {
 
 	n.NewChild(action, 1)
 
-	child, ok := n.Children[action]
-	if !ok {
-		t.Errorf("TestJustInTimeNodeAllocation(): expected child to exist in Node but it was not found")
+	if n.Queue.Len() < 1 {
+		t.Fatalf("TestJustInTimeNodeAllocation(): expected child to exist in Node but it was not found")
 	}
-	if child != nil {
+	s := lazyq.FirstMaxElem(n.Queue)
+	if s.Node != nil {
 		t.Errorf("TestJustInTimeNodeAllocation(): expected child to be nil but it was non-nil")
 	}
 
 	n.next()
 
-	if child := n.Children[action]; child == nil {
+	s = lazyq.First(n.Queue)
+	if s.Node == nil {
 		t.Errorf("TestJustInTimeNodeAllocation(): expected child to be allocated after next() but it was nil")
 	}
 }

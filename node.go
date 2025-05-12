@@ -1,49 +1,66 @@
 package mcit
 
 import (
-	"math"
-
 	"github.com/ajzaff/lazyq"
 )
 
+type Flags int32
+
+const (
+	FlagsMinimize = 1 << iota
+
+	// FlagsExhausted marks whether we are done expanding for this node.
+	// 	* When set, we will not simulate this node further and will rely on the Bandit policy.
+	// 	* When unset, we will generate more simulations (and possibly children) in the future.
+	FlagsExhausted
+)
+
+func (f Flags) Minimize() bool  { return f&FlagsMinimize != 0 }
+func (f Flags) Exhausted() bool { return f&FlagsExhausted != 0 }
+
+type Child struct {
+	Action string
+	Stat
+	*Node
+}
+
 type Node struct {
-	Parent    *Node
-	Action    string
-	Height    int
-	Payload   any
-	Minimize  bool
-	Exhausted bool
-	Trials    float32
-	Queue     lazyq.Queue[Stat]
-	// Exhausted marks whether we are done with this node.
-	// 	* When true, we will not simulate this node further and will rely on the Bandit policy.
-	// 	* When false, we will generate more simulations (and possibly children) in the future.
-	Children map[string]*Node
+	Parent *Node
+	Action string
+	Trials float32
+	Flags
+	Queue lazyq.Queue[Child]
 }
 
 func newRoot() *Node { return &Node{} }
 
+func (n *Node) indexChild(action string) (int, bool) {
+	m := n.Queue.Len()
+	for i := range m {
+		if lazyq.At(n.Queue, i).Action == action {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
 // NewChild creates a new child on the parent Node.
 // Pushes a node stat to the list of bandits.
-func (parent *Node) NewChild(action string, prior float32) (created bool) {
-	if _, found := parent.Children[action]; found {
+func (parent *Node) NewChild(action string, exploreFactor float32) (created bool) {
+	if _, found := parent.indexChild(action); found {
 		return false
-	}
-	if parent.Children == nil {
-		parent.Children = map[string]*Node{}
 	}
 
 	// NOTE: We defer child creation until node is actually opened.
 	//       This saves allocations for nodes that are never explored.
-	parent.Children[action] = nil
-	stat := Stat{Action: action, Prior: prior, Priority: float32(math.Inf(+1))}
+	stat := Stat{ExploreFactor: exploreFactor}
 	// NOTE: We don't use heapify here. The majority of actions are never tried so we don't waste time with the O(log N) heap.Push operation.
 	//       lazyq keeps track of the first index of frontier nodes.
-	parent.Queue.AppendMax(stat)
+	parent.Queue.AppendMax(Child{Action: action, Stat: stat})
 	return true
 }
 
-func (s *Node) next() Stat {
+func (s *Node) next() Child {
 	if lazyq.HasMaxElems(s.Queue) {
 		// We have at least one node which has never been tried before.
 		// Use this time to fix the position in the heap so we can select it.
@@ -59,34 +76,22 @@ func (s *Node) next() Stat {
 		stat := lazyq.FirstMaxElem(s.Queue)
 		child := &Node{
 			Parent: s,
-			Height: s.Height + 1,
 			Action: stat.Action,
 			// Copy the setting from the parent. Run will have a chance to override this.
 			// See Context.Minimize.
-			Minimize: s.Minimize,
+			Flags: s.Flags & FlagsMinimize,
 		}
-		if s.Children == nil {
-			s.Children = map[string]*Node{}
-		}
-		s.Children[stat.Action] = child
+		stat.Node = child
+		lazyq.ReplacePayload(s.Queue, lazyq.MaxIndex(s.Queue), stat)
 	}
 	// NOTE: We always take the first action.
 	// If we ever implemented a temperature feature, we'd need to keep track of this index.
 	return s.Queue.Next()
 }
 
-// Detatched returns a shallow clone of the stat object detatched from patents, children, and the frontier
-// without modifying the original stat object. The tree Height is not reset.
-func (s *Node) Detatched() *Node {
-	copy := *s
-	copy.Parent = nil
-	copy.Children = nil
-	return &copy
-}
-
-// Stat attempts to locate the stat entry in the parent node.
+// Stat attempts to locate the Child entry in the parent node.
 // FIXME: Currently, this is not an efficient operation.
-func (s *Node) Stat() *Stat {
+func (s *Node) Stat() *Child {
 	if s == nil || s.Parent == nil {
 		return nil
 	}

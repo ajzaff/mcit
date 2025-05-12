@@ -44,7 +44,7 @@ func MakeHist[T int64 | float32](bins []T) Hist[T] {
 func Fill[T int64 | float32](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
 	for n := range NodeSeq(root) {
 		for e := range lazyq.Payloads(n.Queue) {
-			x := valueFn(e)
+			x := valueFn(e.Stat)
 			hist.Insert(x)
 		}
 	}
