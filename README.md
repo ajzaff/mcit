@@ -1,3 +1,3 @@
-# mcit
+# `mcts`
 
-Monte-Carlo interative tree search is a Go library for driving MCTS searches simply and efficiently.
+Perform Monte-Carlo tree searches simply and efficiently.

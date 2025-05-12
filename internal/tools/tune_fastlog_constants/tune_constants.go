@@ -8,7 +8,7 @@ import (
 
 	"github.com/ajzaff/fastlog"
 	"github.com/ajzaff/fastlog/suite"
-	"github.com/ajzaff/mcit"
+	mcts "github.com/ajzaff/mcit"
 	"github.com/ajzaff/mcit/perft"
 	"github.com/ajzaff/mcit/variation"
 )
@@ -56,7 +56,7 @@ func (s *search) Reset(actions iter.Seq[string]) {
 func main() {
 	r := rand.New(rand.NewPCG(1336, 1338))
 
-	result := mcit.Search(func(c *mcit.Context) {
+	result := mcts.Search(func(c *mcts.Context) {
 		var s search
 		s.Reset(c.Actions())
 
@@ -68,9 +68,9 @@ func main() {
 		c.Minimize()
 		c.SetResultValue(mse)
 		c.Expand("lo", "hi")
-	}, mcit.RandSource(r), mcit.MaxIters(1_000))
+	}, mcts.RandSource(r), mcts.MaxIters(1_000))
 
-	maxNode := perft.Max(result.Root, func(n *mcit.Node, stat mcit.Stat) float32 {
+	maxNode := perft.Max(result.Root, func(n *mcts.Node, stat mcts.Stat) float32 {
 		return stat.Score()
 	})
 

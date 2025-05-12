@@ -4,10 +4,10 @@ import (
 	"math/rand/v2"
 
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit"
+	"github.com/ajzaff/mcts"
 )
 
-func getSelectLine(root *mcit.Node, selectFn func(*mcit.Node) *mcit.Node) *mcit.Node {
+func getSelectLine(root *mcts.Node, selectFn func(*mcts.Node) *mcts.Node) *mcts.Node {
 	for root.Queue.Len() > 0 {
 		next := selectFn(root)
 		if next == nil {
@@ -18,11 +18,11 @@ func getSelectLine(root *mcit.Node, selectFn func(*mcit.Node) *mcit.Node) *mcit.
 	return root
 }
 
-func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcit.Stat) int) func(*mcit.Node) *mcit.Node {
-	return func(root *mcit.Node) *mcit.Node {
+func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcts.Stat) int) func(*mcts.Node) *mcts.Node {
+	return func(root *mcts.Node) *mcts.Node {
 		// Create an equivalence slice for implementing fair random choice
 		// To tie break between equivalent children according to cmpFn.
-		equal := []mcit.Child{{}}
+		equal := []mcts.Child{{}}
 		for b := range lazyq.Payloads(root.Queue) {
 			a := equal[0]
 			switch c := cmpFn(a.Stat, b.Stat); {
@@ -46,7 +46,7 @@ func selectChildFunc(r *rand.Rand, cmpFn func(a, b mcit.Stat) int) func(*mcit.No
 	}
 }
 
-func compareMaxStat(a, b mcit.Stat) int {
+func compareMaxStat(a, b mcts.Stat) int {
 	as, bs := a.Score(), b.Score()
 	if as < bs {
 		return +1
@@ -57,7 +57,7 @@ func compareMaxStat(a, b mcit.Stat) int {
 	return 0
 }
 
-func compareMinStat(a, b mcit.Stat) int {
+func compareMinStat(a, b mcts.Stat) int {
 	as, bs := a.Score(), b.Score()
 	if as < bs {
 		return -1
@@ -68,7 +68,7 @@ func compareMinStat(a, b mcit.Stat) int {
 	return 0
 }
 
-func compareStatPopularity(a, b mcit.Stat) int {
+func compareStatPopularity(a, b mcts.Stat) int {
 	ar, br := a.Runs, b.Runs
 	if ar < br {
 		return +1
@@ -79,18 +79,18 @@ func compareStatPopularity(a, b mcit.Stat) int {
 	return 0
 }
 
-func MaxVariation(root *mcit.Node, r *rand.Rand) *mcit.Node {
+func MaxVariation(root *mcts.Node, r *rand.Rand) *mcts.Node {
 	return getSelectLine(root, selectChildFunc(r, compareMaxStat))
 }
-func MinVariation(root *mcit.Node, r *rand.Rand) *mcit.Node {
+func MinVariation(root *mcts.Node, r *rand.Rand) *mcts.Node {
 	return getSelectLine(root, selectChildFunc(r, compareMinStat))
 }
-func MostPopularVariation(root *mcit.Node, r *rand.Rand) *mcit.Node {
+func MostPopularVariation(root *mcts.Node, r *rand.Rand) *mcts.Node {
 	return getSelectLine(root, selectChildFunc(r, compareStatPopularity))
 }
 
 // Variation returns the node accessed from root by the given line or nil.
-func Variation(root *mcit.Node, line ...string) *mcit.Node {
+func Variation(root *mcts.Node, line ...string) *mcts.Node {
 	for _, a := range line {
 		if root == nil {
 			return nil
@@ -105,11 +105,11 @@ func Variation(root *mcit.Node, line ...string) *mcit.Node {
 }
 
 // Stat returns the stat accessed from root by the given line or empty.
-func Stat(root *mcit.Node, line ...string) mcit.Stat {
+func Stat(root *mcts.Node, line ...string) mcts.Stat {
 	n := Variation(root, line...)
 	s := n.Stat()
 	if s == nil {
-		return mcit.Stat{}
+		return mcts.Stat{}
 	}
 	return s.Stat
 }

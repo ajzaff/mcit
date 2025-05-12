@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit"
+	"github.com/ajzaff/mcts"
 )
 
 const exploreTerm = 2 * math.Pi
@@ -41,7 +41,7 @@ func MakeHist[T int64 | float32](bins []T) Hist[T] {
 	return Hist[T]{Bins: b}
 }
 
-func Fill[T int64 | float32](root *mcit.Node, hist Hist[T], valueFn func(mcit.Stat) T) {
+func Fill[T int64 | float32](root *mcts.Node, hist Hist[T], valueFn func(mcts.Stat) T) {
 	for n := range NodeSeq(root) {
 		for e := range lazyq.Payloads(n.Queue) {
 			x := valueFn(e.Stat)

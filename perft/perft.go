@@ -3,7 +3,7 @@ package perft
 
 import (
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit"
+	"github.com/ajzaff/mcts"
 )
 
 type SearchStats struct {
@@ -14,9 +14,9 @@ type SearchStats struct {
 	DeepestRun     int64
 }
 
-func DetailedSearchStats(root *mcit.Node) SearchStats {
+func DetailedSearchStats(root *mcts.Node) SearchStats {
 	var results SearchStats
-	visitNodes(root, 0, func(n *mcit.Node, depth int) bool {
+	visitNodes(root, 0, func(n *mcts.Node, depth int) bool {
 		// NodeCount
 		results.NodeCount++
 		// LeafCount

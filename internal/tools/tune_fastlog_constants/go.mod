@@ -1,4 +1,4 @@
-module github.com/ajzaff/mcit/internal/tools/tune_fastlog_constants
+module github.com/ajzaff/mcts/internal/tools/tune_fastlog_constants
 
 go 1.24.2
 
@@ -9,5 +9,3 @@ require (
 )
 
 require github.com/ajzaff/lazyq v0.2.0 // indirect
-
-replace github.com/ajzaff/mcit => ../../..

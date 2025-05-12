@@ -1,4 +1,4 @@
-module github.com/ajzaff/mcit
+module github.com/ajzaff/mcts
 
 go 1.24.2
 

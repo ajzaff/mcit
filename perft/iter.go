@@ -4,10 +4,10 @@ import (
 	"iter"
 
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit"
+	"github.com/ajzaff/mcts"
 )
 
-func visitNodes(root *mcit.Node, depth int, visitFn func(n *mcit.Node, depth int) bool) {
+func visitNodes(root *mcts.Node, depth int, visitFn func(n *mcts.Node, depth int) bool) {
 	if root == nil || !visitFn(root, depth) {
 		return
 	}
@@ -17,8 +17,8 @@ func visitNodes(root *mcit.Node, depth int, visitFn func(n *mcit.Node, depth int
 }
 
 // NodeSeq returns an iterator over all nodes under root recursively in descending priority order.
-func NodeSeq(root *mcit.Node) iter.Seq[*mcit.Node] {
-	return func(yield func(*mcit.Node) bool) {
-		visitNodes(root, 0, func(n *mcit.Node, _ int) bool { return yield(n) })
+func NodeSeq(root *mcts.Node) iter.Seq[*mcts.Node] {
+	return func(yield func(*mcts.Node) bool) {
+		visitNodes(root, 0, func(n *mcts.Node, _ int) bool { return yield(n) })
 	}
 }

@@ -1,4 +1,4 @@
-package mcit
+package mcts
 
 import (
 	"testing"

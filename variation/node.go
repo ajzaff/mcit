@@ -2,11 +2,11 @@ package variation
 
 import (
 	"github.com/ajzaff/lazyq"
-	"github.com/ajzaff/mcit"
+	"github.com/ajzaff/mcts"
 )
 
 // Depth calculates the number of nodes between n and root.
-func Depth(n *mcit.Node) int {
+func Depth(n *mcts.Node) int {
 	if n.Parent == nil {
 		return 0
 	}
@@ -15,7 +15,7 @@ func Depth(n *mcit.Node) int {
 
 // Detatched returns a clone of the stat object detatched from patents and children
 // without modifying the original stat object.
-func Detatched(n *mcit.Node) *mcit.Node {
+func Detatched(n *mcts.Node) *mcts.Node {
 	copy := *n
 	copy.Parent = nil
 	copy.Queue = lazyq.Clone(copy.Queue)
@@ -27,11 +27,11 @@ func Detatched(n *mcit.Node) *mcit.Node {
 }
 
 // LookupElem searches over all children of n and returns the first marked with action.
-func LookupElem(n *mcit.Node, action string) (lazyq.Elem[mcit.Child], bool) {
+func LookupElem(n *mcts.Node, action string) (lazyq.Elem[mcts.Child], bool) {
 	for _, e := range lazyq.ElementIndices(n.Queue) {
 		if e.E.Action == action {
 			return e, true
 		}
 	}
-	return lazyq.Elem[mcit.Child]{}, false
+	return lazyq.Elem[mcts.Child]{}, false
 }

@@ -1,4 +1,4 @@
-package mcit
+package mcts
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 // ErrStop is returned from the search when the search is stopped prematurely with Stop.
 var ErrStop = errors.New("stop")
 
-// Context encapulates the control methods for the MCIT search.
+// Context encapulates the control methods for the MCTS search.
 type Context struct {
 	actions []string
 
