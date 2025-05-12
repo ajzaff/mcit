@@ -115,12 +115,30 @@ func extractVariation(root *Node, line ...string) *Node {
 	return root
 }
 
-// extractStat is a test helper that mirrors variation.Stat.
+// lookupElem is a test helper which mirrors [variation.LookupElem]
+func lookupElem(n *Node, action string) (lazyq.Elem[Child], bool) {
+	for e := range lazyq.Elements(n.Queue) {
+		if e.E.Action == action {
+			return e, true
+		}
+	}
+	return lazyq.Elem[Child]{}, false
+}
+
+// LookupSelf is a test helper which mirrors [variation.LookupSelf]
+func lookupSelf(n *Node) (lazyq.Elem[Child], bool) {
+	if n == nil || n.Parent == nil {
+		return lazyq.Elem[Child]{}, false
+	}
+	return lookupElem(n.Parent, n.Action)
+}
+
+// extractStat is a test helper that mirrors [variation.Stat].
 func extractStat(root *Node, line ...string) Stat {
 	n := extractVariation(root, line...)
-	s := n.Stat()
-	if s == nil {
+	s, ok := lookupSelf(n)
+	if !ok {
 		return Stat{}
 	}
-	return s.Stat
+	return s.E.Stat
 }

@@ -27,11 +27,23 @@ func Detatched(n *mcts.Node) *mcts.Node {
 }
 
 // LookupElem searches over all children of n and returns the first marked with action.
+//
+// LookupElem returns false when no such entry exists.
 func LookupElem(n *mcts.Node, action string) (lazyq.Elem[mcts.Child], bool) {
-	for _, e := range lazyq.ElementIndices(n.Queue) {
+	for e := range lazyq.Elements(n.Queue) {
 		if e.E.Action == action {
 			return e, true
 		}
 	}
 	return lazyq.Elem[mcts.Child]{}, false
+}
+
+// LookupSelf searches over parent's children to find n's child entry.
+//
+// LookupSelf returns false when no such entry exists.
+func LookupSelf(n *mcts.Node) (lazyq.Elem[mcts.Child], bool) {
+	if n == nil || n.Parent == nil {
+		return lazyq.Elem[mcts.Child]{}, false
+	}
+	return LookupElem(n.Parent, n.Action)
 }

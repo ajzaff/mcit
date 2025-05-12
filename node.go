@@ -86,17 +86,3 @@ func (s *Node) next() Child {
 	// If we ever implemented a temperature feature, we'd need to keep track of this index.
 	return s.Queue.Next()
 }
-
-// Stat attempts to locate the Child entry in the parent node.
-// FIXME: Currently, this is not an efficient operation.
-func (s *Node) Stat() *Child {
-	if s == nil || s.Parent == nil {
-		return nil
-	}
-	for e := range lazyq.Payloads(s.Parent.Queue) {
-		if e.Action == s.Action {
-			return &e
-		}
-	}
-	return nil
-}

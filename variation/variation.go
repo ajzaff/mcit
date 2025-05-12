@@ -107,9 +107,9 @@ func Variation(root *mcts.Node, line ...string) *mcts.Node {
 // Stat returns the stat accessed from root by the given line or empty.
 func Stat(root *mcts.Node, line ...string) mcts.Stat {
 	n := Variation(root, line...)
-	s := n.Stat()
-	if s == nil {
+	s, ok := LookupSelf(n)
+	if !ok {
 		return mcts.Stat{}
 	}
-	return s.Stat
+	return s.E.Stat
 }
