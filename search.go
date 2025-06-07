@@ -72,6 +72,7 @@ func Search(runFn Func, opts ...Option) (result Result) {
 		}
 
 		// 	2c. (optional) Expand the node, and add children to the state.
+		lazyq.Grow(&frontier.Queue, len(c.expand)) // Ensure exact capacity with no wasted space.
 		for i, action := range c.expand {
 			//	2ca. (optional) Priors, if provided, should match the slice of expanded nodes.
 			// FIXME: Implement prior normalization and renormalizaion.
